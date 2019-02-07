@@ -1,0 +1,51 @@
+.textarea-container {
+  position: relative;
+}
+.textarea-container textarea {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+.textarea-container button {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.has-error {
+    color: red;
+    background-color: red;
+}
+
+.form-group input[type="checkbox"] {
+    display: none;
+}
+
+.form-group input[type="checkbox"] + .btn-group > label span {
+    width: 30px;
+	
+}
+
+.form-group input[type="checkbox"] + .btn-group > label span:first-child {
+    display: inline-block;
+}
+.form-group input[type="checkbox"] + .btn-group > label span:last-child {
+    
+	display: none;
+}
+
+.form-group input[type="checkbox"]:checked + .btn-group > label span:first-child {
+    display: none; 
+	
+}
+.form-group input[type="checkbox"]:checked + .btn-group > label span:last-child {
+      display: inline-block;
+}
+
+.css-form input.ng-invalid.ng-touched {
+	background-color: #FA787E;
+}
+
+.css-form input.ng-valid.ng-touched {
+	background-color: #78FA89;
+}
