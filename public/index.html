@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"><!-- load bootstrap -->
 	<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/2.1.0/toaster.min.css" rel="stylesheet" />
+	<link rel="stylesheet" href="http://mbenford.github.io/ngTagsInput/css/ng-tags-input.min.css" />
 	<link rel="stylesheet" href="main.css">
     <style>
         html                    { overflow-y:scroll; }
@@ -31,6 +32,7 @@
 	<script src="http://code.angularjs.org/1.7.6/angular-animate.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/2.1.0/toaster.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"></script>
+	<script src="http://mbenford.github.io/ngTagsInput/js/ng-tags-input.min.js"></script>
 	<script src="core.js"></script>
 
 </head>
@@ -55,44 +57,32 @@
 						<form class="form-horizontal">
 							<div class="form-group">
 								<label>Project</label>
-								<select class="form-control" ng-change="getTopics(formGet.projId)" ng-model="formGet.projId" ng-options="proj._id as proj.projectName for proj in projs">
+								<select class="form-control" ng-change="getTopics(formGet.projId)" ng-model="formGet.projId" ng-options="proj._id as proj.name for proj in projs">
 									<option value="">Select your project</option>
 								</select>
 							</div>
 						  
 							<div class="form-group">
 								<label>Topic</label>
-								<select class="form-control" ng-change="getTasks(formGet.projId, formGet.topicId)" ng-model="formGet.topicId" ng-options="topic._id as topic.topicName for topic in topics">
+								<select class="form-control" ng-change="getTasks(formGet.projId, formGet.topicId)" ng-model="formGet.topicId" ng-options="topic._id as topic.name for topic in topics">
 									<option value="">Select your topic</option>
 								</select>
 							</div>
 						  
 							<div class="form-group">
 								<label>Task</label>
-								<select class="form-control" ng-model="formGet.task" ng-options="task as task.taskName for task in tasks">
+								<select class="form-control" ng-change="showExtra(formGet.task)" ng-model="formGet.task" ng-options="task as task.name for task in tasks">
 									<option value="">Select your task</option>
 								</select>
 							</div>
 							
-							<div ng-show="formGet.task.idrequired" class="ng-show">
-							<div class="form-group">
-								<label>User ID:</label>
-								<input type="text" class="form-control" placeholder="User ID" ng-model="formGet.userid">
+							<div>
+								<div class="form-group">
+							
+								</div>
 							</div>
-						  
-							<div class="form-group">
-								<label>FDID:</label>
-								<input type="text" class="form-control" placeholder="Feedback ID" ng-model="formGet.fdid">
-							</div>
-						  
-							<div class="form-group">
-								<label>PMID:</label>
-								<input type="text" class="form-control" placeholder="Payment ID">
-							</div>
-							</div>
-
+							
 							<button type="submit" class="btn btn-primary btn-lg" ng-click="getTemplate()">Get</button>
-							<button type="submit" class="btn btn-primary btn-lg" ng-click="clearTodo()">Clear</button>
 						</form>
 					</div>
 					
@@ -111,161 +101,93 @@
 				<toaster-container toaster-options="{'close-button':false, 'time-out':{ 'toast-success': 2000 } }"></toaster-container>
 				
 				<div class="row">
-					<div class="col-sm-2">
+					<div class="col-sm-6">
 						<form class="form-horizontal" name="userForm" ng-submit="submitForm(userForm.$valid)" novalidate>
 							<div class="form-group">
 								
 								<label>Project</label>
-								<input type="text" class="form-control" placeholder="Project name" name="projectname" ng-model="formAdd.projname" required>
-								<p ng-show="userForm.projectname.$error.required && submitted" style="color:red">Project name is required.</p>
+								<editable-select 
+								  ng-model="formAdd.proj" 
+								  options="projs"
+								  name="project"
+								  input="formAdd"
+								  holder="Choose a project"
+								  other="Create new">
+								</editable-select>
+								<!-- <input type="text" class="form-control" placeholder="Project name" name="projectname" ng-model="formAdd.projname" required> -->
+								<!-- <p ng-show="userForm.projectname.$error.required && submitted" style="color:red">Project name is required.</p> -->
 							</div>
 						  
 							<div class="form-group">
 								<label>Topic</label>
-								<input type="text" class="form-control" placeholder="Topic name" ng-model="formAdd.topicname">
+								<editable-select 
+								  ng-model="formAdd.topic" 
+								  options="formAdd.proj.topics" 
+								  other="Create new"
+								  input="formAdd"
+								  holder="Choose a topic"
+								  name="topic"
+								</editable-select>
+								<!-- <input type="text" class="form-control" placeholder="Topic name" ng-model="formAdd.topicname"> -->
 							</div>
 						  
 							<div class="form-group">
 								<label>Task</label>
-								<input type="text" class="form-control" placeholder="Task name" ng-model="formAdd.taskname">
+								<editable-select 
+								  ng-model="formAdd.task" 
+								  options="formAdd.topic.tasks"
+								  input="formAdd"
+								  other="Create new"
+								  holder="Choose a task"
+								  name="task"
+								</editable-select>
 							</div>
 							
-							<div class="form-group" ng-show="formAdd.useridReq">
-								<label>User ID:</label>
-								<input type="text" class="form-control" name="userid" placeholder="User ID" ng-model="formAdd.userid" ng-required="formAdd.useridReq">
-								<p ng-show="userForm.userid.$error.required && submitted && formAdd.useridReq" style="color:red">User ID is required.</p>
-							</div>
-						  
-							<div class="form-group" ng-show="formAdd.fdidReq">
-								<label>FDID:</label>
-								<input type="text" class="form-control" name="fdid" placeholder="Feedback ID" ng-model="formAdd.fdid" ng-required="formAdd.fdidReq">
-								<p ng-show="userForm.fdid.$error.required && submitted && formAdd.fdidReq" style="color:red">Feedback ID is required.</p>
-							</div>
-						  
-							<div class="form-group" ng-show="formAdd.pmidReq">
-								<label>PMID:</label>
-								<input type="text" class="form-control" name="pmid" placeholder="Payment ID" ng-model="formAdd.pmid" ng-required="formAdd.pmidReq" >
-								<p ng-show="userForm.pmid.$error.required && submitted && formAdd.pmidReq" style="color:red">Payment ID is required.</p>
+							<div class="form-group">
+								<label>Extra fields:</label>
+								<select class="form-control" ng-change="addField(extra)" ng-model="extra" ng-options="extra for extra in extras">
+									<option value="">Add extra fields</option>
+								</select>
+								
+								<tags-input ng-model="formAdd.task.extras"></tags-input>
 							</div>
 
 							<button type="submit" class="btn btn-primary btn-lg">Add</button>
 						</form>
 					</div>
 					
-					<div class="col-sm-4">
+					<!-- <div class="col-sm-4">
 						<form class="form-horizontal">
 							<div class="form-group">
 								<label>Project Description</label>
-								<input type="text" class="form-control" placeholder="Project description" ng-model="formAdd.projdes">
+								<input type="text" class="form-control" placeholder="Project description" ng-model="formAdd.proj.description">
 							</div>
 						  
 							<div class="form-group">
 								<label>Topic Description</label>
-								<input type="text" class="form-control" placeholder="Topic description" ng-model="formAdd.topicdes">
+								<input type="text" class="form-control" placeholder="Topic description" ng-model="formAdd.topic.description">
 							</div>
 						  
 							<div class="form-group">
 								<label>Task Description</label>
-								<input type="text" class="form-control" placeholder="Task description" ng-model="formAdd.taskdes">
+								<input type="text" class="form-control" placeholder="Task description" ng-model="formAdd.task.description">
 							</div>
 							
-							<div class="form-group">
-								<!-- <input class="custom-checkbox" type="checkbox" ng-model="formAdd.useridReq"> -->
-								<input type="checkbox" name="user-checkbox" id="fancy-checkbox-danger-custom-icons" autocomplete="off" ng-model="formAdd.useridReq"/>
-								<div class="btn-group">
-									<label for="fancy-checkbox-danger-custom-icons" class="btn btn-success">
-										<span class="fa fa-check"></span>
-									</label>
-									<label for="fancy-checkbox-danger-custom-icons" class="btn btn-default active">
-										userID required
-									</label>
-								</div>					
-							</div>
 						  
-							<div class="form-group ">
-								<div class="input-group">
-								
-								<input type="checkbox" name="fd-checkbox" id="fancy-checkbox-danger-custom-icons1" autocomplete="off" ng-model="formAdd.fdidReq"/>
-								<div class="btn-group">
-									<label for="fancy-checkbox-danger-custom-icons1" class="btn btn-success">
-										
-										<span class="fa fa-check"></span>
-									</label>
-									<label for="fancy-checkbox-danger-custom-icons1" class="btn btn-default active">
-										FDID required
-									</label>
-								</div>
-								</div>
-							</div>
-						  
-							<div class="form-group">
-								<input type="checkbox" name="pm-checkbox" id="fancy-checkbox-danger-custom-icons2" autocomplete="off" ng-model="formAdd.pmidReq"/>
-								<div class="btn-group">
-									<label for="fancy-checkbox-danger-custom-icons2" class="btn btn-success">
-										
-										<span class="fa fa-check"></span>
-									</label>
-									<label for="fancy-checkbox-danger-custom-icons2" class="btn btn-default active">
-										PMID required
-									</label>
-								</div>	
-							</div>
-
 						</form>
-					</div>
+					</div> -->
 					
 					<div class="col-sm-6">						  
 						<div class="form-group border-primary textarea-container">						  
 							<label for="textareaAdd">Large textarea</label>						  
-							<textarea class="form-control rounded-0" ng-model="formAdd.template" id="textareaShow" rows="20"></textarea>
+							<textarea class="form-control rounded-0" ng-model="formAdd.task.template" id="textareaShow" rows="20"></textarea>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
 		
-		<!-- TODO LIST -->
-        <!-- <div id="todo-list" class="row"> -->
-            <!-- <div class="col-sm-4"> -->
-
-                <!--LOOP OVER THE TODOS IN $scope.todos-->
-                <!-- <!-- <div class="checkbox" ng-repeat="todo in todos"> -->
-                    <!-- <label> -->
-                        <!-- <input type="checkbox" ng-click="deleteTodo(todo._id)"> {{ todo.text }} -->
-                    <!-- </label> -->
-                <!-- </div> -->
-				<!-- <button type="button" class="btn btn-primary">Fuck khoi bitch</button> -->
-            <!-- </div> -->
-			<!-- <div class="col-sm-4"> -->
-				<!-- <div class="dropdown"> -->
-				  <!-- <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> -->
-					<!-- Fuck whom ? -->
-				  <!-- </button> -->
-
-				  <!-- <div class="dropdown-menu" aria-labelledby="dropdownMenuLink"> -->
-					<!-- <a class="dropdown-item" href="#">Fuck Khoi Bitch</a> -->
-					<!-- <a class="dropdown-item" href="#">Fuck Khoi Bitch</a> -->
-					<!-- <a class="dropdown-item" href="#">Fuck Khoi Bitch</a> -->
-				  <!-- </div> -->
-				<!-- </div> -->
-			<!-- </div> -->
-        <!-- </div> -->
-
-        <!-- FORM TO CREATE TODOS -->
-		<!-- <div id="todo-form" class="row">
-            <div class="col-sm-8 col-sm-offset-2 text-center">
-                <form>
-                    <div class="form-group">
-
-                        <!-- BIND THIS VALUE TO formGet.text IN ANGULAR 
-                        <input type="text" class="form-control input-lg text-center" placeholder="I want to buy a puppy that will love me forever" ng-model="formGet.text">
-                    </div>
-
-                    <!-- createToDo() WILL CREATE NEW TODOS 
-                    <button type="submit" class="btn btn-primary btn-lg" ng-click="createTodo()">Add</button>
-                </form>
-            </div>
-        </div> -->
+		
 		
     </div>
 
