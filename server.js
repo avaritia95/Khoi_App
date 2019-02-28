@@ -28,13 +28,14 @@
     app.use(bodyParser.json({ type: 'application/vnd.api+json' })); // parse application/vnd.api+json as json
     app.use(methodOverride());
 
+	var extras = ["uid","fbid","pmid","date","reason"]; //extra features for template
 	
 	// define model =================
 	var taskSchema = new Schema(
 	{	
-		taskName: { type: String, required: [true, 'Missing task name'] },
+		name: { type: String, required: [true, 'Missing task name'] },
 		description: String,
-		idrequired: Boolean,
+		extras: [],
 		template: String
 		
 	});
@@ -42,7 +43,7 @@
 	
 	var topicSchema = new Schema(
 	{	
-		topicName: { type: String, required: [true, 'Missing topic name'] },
+		name: { type: String, required: [true, 'Missing topic name'] },
 		description: String,
 		tasks: [taskSchema]
 	})
@@ -51,7 +52,7 @@
 	
     var projectSchema = new Schema(
 	{	
-		projectName: { type: String, required: [true, 'Missing project name'] },
+		name: { type: String, required: [true, 'Missing project name'] },
 		description: String,
 		topics: [topicSchema]
 	})
@@ -62,20 +63,19 @@
 
     // api ---------------------------------------------------------------------
     // get all todos
-    app.get('/api/projects', function(req, res) {
-		
-		
+    app.get('/api/projects', function(req, res) {		
         // use mongoose to get all todos in the database
         Project.find(function(err, projs) {
-
             // if there is an error retrieving, send the error. nothing after res.send(err) will execute
             if (err)
                 res.send(err)
-
             res.json(projs); // return all todos in JSON format
-        });
-		
+        });		
 		//res.json(projects)
+    });
+	
+	app.get('/api/extras', function(req, res) {		
+		res.json(extras)
     });
 	
 	app.get('/api/topics', function(req, res) {
@@ -96,14 +96,14 @@
 	
 	function findTopic(proj, name){
 		for(i in proj.topics){
-			if (proj.topics[i].topicName = name) return proj.topics[i];	
+			if (proj.topics[i].name = name) return proj.topics[i];	
 		}
 		return null;
 	}
 	
 	function createTopic(proj, req){
 		var newtopic = new Topic({
-			topicName: req.body.topicname,
+			name: req.body.topicname,
 			description: req.body.topicdes,
 			tasks: []
 		})
@@ -114,14 +114,14 @@
 	
 	function findTask(topic, name){
 		for(i in topic.tasks){
-			if (topic.tasks[i].taskName = name) return topic.tasks[i];	
+			if (topic.tasks[i].name = name) return topic.tasks[i];	
 		}
 		return null;
 	}
 	
 	function createTask(topic, req){
 		var newtask = new Task({
-			taskName: req.body.taskname,
+			name: req.body.taskname,
 			description: req.body.taskdes,
 			idrequired: true,
 			template: req.body.template
@@ -129,76 +129,209 @@
 		topic.tasks.push(newtask);
 		return topic.tasks[topic.tasks.length-1];
 	}
+	
+	function isEmpty(objectInput) {
+		for ( name in objectInput) {
+			return false;
+		}
+		return true;
+	}
     // create project
     app.post('/api/add', function(req, res) {
         // Find project, create new if not exist
 		// Find topic, create new if not exist
 		// Find task, create new if not exist
-		var update = {projectName : req.body.projname, description: req.body.projdes};
-		var query = {projectName: req.body.projname}; 
-		
+		var data = req.body;
+		var msg = "";
+		console.log(data);
+		var update = {name : data.proj.name};
+		var query = data.proj._id ? {_id: data.proj._id} : {_id:  new ObjectId()};
 		var options = { upsert: true, new: true, setDefaultsOnInsert: true };
-		
 		Project.findOneAndUpdate(query, update, options, function(err, doc){
-			if (err) return res.send(500, { error: err });
-			switch(req.body.addType){
-				case "project": return res.send("Project is created successfully");
-				case "topic":
-					var topic = findTopic(doc,req.body.topicname);
-					if(topic != null) topic.description = req.body.topicdes;
-					else{
-						var newtopic = new Topic({
-							topicName: req.body.topicname,
-							description: req.body.topicdes,
-							tasks: []
-						})
-						doc.topics.push(newtopic);
-					}
-					doc.save(function(err,d){
-						if (err) console.log(err);
-						console.log(d);
-					})	
-					//console.log(doc);
-					return res.send("Topic is created successfully");
-				case "task":
-					var topic = findTopic(doc,req.body.topicname);
-					if(topic != null){
-						var task = findTask(topic, req.body.taskname);
-						if ( task != null ) {
-							task.description = req.body.taskdes;
-							task.template = req.body.template;
-						}
-						else{
-							createTask(topic,req);
-						}
-					}
-					else{
-						createTopic(doc,req);
-						createTask(newtopic,req);
-					}
-					return res.send("Task is created successfully");
+			if (err) {console.log(err); return;}
+			
+			if(isEmpty(data.task) && isEmpty(data.topic)) { msg = "Project upsert successfully"; return; }
+			
+			if(!isEmpty(data.topic)){ //If upsert topic
+				var newtopic = new Topic({
+					_id: new ObjectId(),
+					name: data.topic.name,
+					//description: data.topic.description,
+					tasks: []
+				})
 			}
 			
+			if(!isEmpty(data.task)){ // If upsert task
+				var newtask = new Task({
+					_id: new ObjectId(),
+					name: data.task.name,
+					//description: data.task.description,
+					extras: data.task.extras,
+					template: data.task.template
+				})
+			}
+			
+			if(!isEmpty(data.topic) && !isEmpty(data.task)) newtopic.tasks.push(newtask);// If both upsert both topic and task				
+			
+			if(!isEmpty(data.topic) || !isEmpty(data.task)){
+				Project.updateOne(
+					{_id: doc._id, "topics._id" : { $ne: data.topic._id }},
+					{$push : { topics : newtopic }},
+					function(err,affected){
+						if(err) console.log(err);
+						console.log(affected);
+						if(affected.nModified === 0){ //If topic exist
+							update = {$set : { 'topics.$.name' : data.topic.name}};
+							query = {_id: doc._id, "topics._id" : data.topic._id};
+							if(!isEmpty(data.task)) { // If upsert task
+								update["$push"] = { 'topics.$.tasks': newtask};
+								query["topics.tasks._id"] = { $ne: data.task._id };
+							}
+							Project.updateOne(
+								//{_id: doc._id, "topics._id" : data.topic._id, "topics.tasks._id" : { $ne: data.task._id }},
+								//{$set : { 'topics.$.name' : data.topic.name, 'topics.$.description' : data.topic.description},
+								// $push: { 'topics.$.tasks': newtask}
+								//},
+								query,update,
+								function(e,a){
+									if(e) console.log(e);
+									if(isEmpty(data.task)) { msg = "Topic upsert successfully"; return; }
+									if(a.nModified === 0){ // If task exist
+										console.log("Task exist");
+										var temptopic = doc.topics.id(data.topic._id);
+										var temptask = temptopic.tasks.id(data.task._id);
+										temptopic.name = data.topic.name;
+										temptask.name = data.task.name;
+										temptask.template = data.task.template;
+										temptask.extras = data.task.extras;
+										msg = "Task update successfully";
+										doc.save();
+										
+									}
+									else msg = "Task insert successfully";
+									console.log(a);
+								}
+							);
+						}
+						else{
+							if(isEmpty(data.task)) msg = "Topic upsert successfully";
+							else msg = "Task upsert successfully";
+						}
+						Project.find(function(err, projs) {
+							if (err)
+								res.send(err)
+							result = {"projs" : projs, "msg" : msg};
+							res.json(result); // return all todos in JSON format
+						});
+					}
+				);
+			}
 		});
 		
-		/* Project.create({
-            projectName : req.body.projname,
-            description : req.body.projdes,
-			topics: []
-        }, function(err, proj) {
-            if (err)
-                res.send(err);
-			else{
-				res.send("Project is created successfully");
-			}
-            
-        }); */
+		/*
+		switch(data.addType){	
+			case "project":
+				var data = req.body;
+				var update = {name : data.proj.name, description: data.proj.description};
+				var query = data.proj._id ? {_id: data.proj._id} : {_id:  new ObjectId()};
+				var options = { upsert: true, new: true, setDefaultsOnInsert: true };
+				Project.findOneAndUpdate(query, update, options, function(err, doc){
+					if (err) {console.log(err); return err;}
+					else res.send("Project is created successfully");
+				})
+				break;
+			case "topic":
+				Project.findOneAndUpdate(query, update, options, function(err, doc){
+					if (err) {console.log(err); return;}
+					
+					var newtopic = new Topic({
+						_id: new ObjectId(),
+						name: data.topic.name,
+						description: data.topic.description,
+						tasks: []
+					})
+
+					Project.update(
+						{_id: doc._id, "topics._id" : { $ne: data.topic._id }},
+						{$push : { topics : newtopic }},
+						function(err,affected){
+							if(err) console.log(err);
+							console.log(affected);
+							if(affected.nModified === 0){
+								Project.update(
+									{_id: doc._id, "topics._id" : data.topic._id },
+									{$set : { 'topics.$.name' : data.topic.name, 'topics.$.description' : data.topic.description}},
+									function(e,a){
+										if(e) console.log(e);
+										console.log(a);
+									}
+								);
+							}
+						}
+					);
+				});	
+				res.send("Topic is created successfully");
+				break;				
+			case "task":
+				Project.findOneAndUpdate(query, update, options, function(err, doc){
+					if (err) {console.log(err); return;}
+					
+					var newtopic = new Topic({
+						_id: new ObjectId(),
+						name: data.topic.name,
+						description: data.topic.description,
+						tasks: []
+					})
+					
+					var newtask = new Task({
+						_id: new ObjectId(),
+						name: data.task.name,
+						description: data.task.description,
+						idrequired: true,
+						template: data.template
+					})
+					newtopic.tasks.push(newtask);					
+					Project.updateOne(
+						{_id: doc._id, "topics._id" : { $ne: data.topic._id }},
+						{$push : { topics : newtopic }},
+						function(err,affected){
+							if(err) console.log(err);
+							console.log(affected);
+							if(affected.nModified === 0){
+								Project.updateOne(
+									{_id: doc._id, "topics._id" : data.topic._id, "topics.tasks._id" : { $ne: data.task._id }},
+									{$set : { 'topics.$.name' : data.topic.name, 'topics.$.description' : data.topic.description},
+									 $push: { 'topics.$.tasks': newtopic}
+									},
+									function(e,a){
+										if(e) console.log(e);
+										if(a.nModified === 0){
+											Project.updateOne(
+												{_id: doc._id, "topics._id" : data.topic._id, "topics.tasks._id" : data.task._id},
+												{$set : { 'topics.$.name' : data.topic.name, 'topics.$.description' : data.topic.description,
+												'topics.$.tasks.$[task].name': data.task.name, 'topics.$.tasks.$[task].description': data.task.description, 'topics.$.tasks.$[task].template' : data.template}},
+												{ arrayFilters: [{ 'task._id': data.task._id }] },
+												function(e1,a1){
+													if(e1) console.log(e1);
+													console.log(a1);
+												})
+										}
+										console.log(a);
+									}
+								);
+							}
+						}
+					);
+				});
+				res.send("Task is created successfully");
+				break;
+		}*/		
     });
 	
 	// create topics
     app.post('/api/topics', function(req, res) {
         var newtopic = new Topic({
-			topicName: req.body.title,
+			name: req.body.title,
 			description: req.body.des,
 			tasks: []
 		})
@@ -218,7 +351,7 @@
 		console.log(req.body.projId);
 		console.log(req.body.topicId);
 		var newtask = new Task({
-			taskName: req.body.title,
+			name: req.body.title,
 			description: req.body.des,
 			idrequired: true,
 			template: req.body.template
