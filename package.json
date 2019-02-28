@@ -5,6 +5,7 @@
   "main": "server.js",
   "author": "Scotch",
   "dependencies": {
+    "angularjs-datepicker": "^2.1.23",
     "body-parser": "~1.18.3",
     "express": "~4.16.4",
     "method-override": "~3.0.0",
