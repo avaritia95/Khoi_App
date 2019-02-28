@@ -20,15 +20,21 @@
 	
 	//Ràng buộc kết nối với sự kiện lỗi (để lấy ra thông báo khi có lỗi)
 	db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-	
     app.use(express.static(__dirname + '/public'));                 // set the static files location /public/img will be /img for users
-    app.use(morgan('dev'));                                         // log every request to the console
+    app.use(express.static(__dirname + '/node_modules'));
+	app.use(morgan('dev'));                                         // log every request to the console
     app.use(bodyParser.urlencoded({'extended':'true'}));            // parse application/x-www-form-urlencoded
     app.use(bodyParser.json());                                     // parse application/json
     app.use(bodyParser.json({ type: 'application/vnd.api+json' })); // parse application/vnd.api+json as json
     app.use(methodOverride());
 
-	var extras = ["uid","fbid","pmid","date","reason"]; //extra features for template
+	var extras = [
+		{text:"uid", des:"User ID"}, 
+		{text: "fbid", des:"Feedback ID"},
+		{text:"pmid", des:"Payment ID"},
+		{text:"date", des:"Date"},
+		{text:"reason", des:"Reason"},
+		]; //extra features for template
 	
 	// define model =================
 	var taskSchema = new Schema(
