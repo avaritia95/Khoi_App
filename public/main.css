@@ -12,10 +12,25 @@
   right: 0;
 }
 
-.has-error {
-    color: red;
-    background-color: red;
+input[name="editable-select"]{
+  background-color: #ffffff;
 }
+
+.dropdown-menu{
+	width: 100%
+}
+.dropdown-menu:hover {
+  cursor: pointer;
+}
+
+.dropdown-menu li {
+  padding-left: 10px;
+}
+
+.dropdown-menu li:hover {
+  background-color: #eeeeee;
+}
+
 
 .form-group input[type="checkbox"] {
     display: none;
