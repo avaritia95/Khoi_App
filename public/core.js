@@ -8,7 +8,7 @@
 // getTask
 // restructure project
 
-angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
+angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepicker'])
 
 .controller('mainController', function($scope, $http, toaster) {
 
@@ -23,7 +23,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
     $http.get('/api/projects')
         .then(function(res) {
             $scope.projs = res.data;
-            console.log(res);
+            //console.log(res);
         }, function(err) {
             console.log('Error: ' + err);
         });
@@ -45,6 +45,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
 				console.log(res.data);
 				toaster.pop('success', null, res.data.msg, 2000, 'trustedHtml');
 				$scope.formAdd = {};
+				$scope.formGet = {};
 				$scope.projs = res.data.projs;
 			}, function(err) {
 				console.log('Error: ' + err);
@@ -72,12 +73,24 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
 		return true;
 	}
 	
+	$scope.checkDateTag = function(obj){
+		if(!isEmpty(obj)){
+			for(i = 0; i < obj.extras.length; i++){
+				if(obj.extras[i].text === "date") return true;
+			}
+		}
+		return false;
+	}
+	$scope.filterDateTag = function(a){
+		if(a.text == "date") return false;
+		return true;
+	}
+	
 	$scope.addField = function(extra){
-		console.log(extra);
-		var a = {text : extra};
+		if(isEmpty($scope.formAdd.task.extras)) $scope.formAdd.task.extras = [];
 		if(!isEmpty($scope.formAdd.task)) {
-			if (!$scope.formAdd.task.extras.some(e => e.text === extra)) {
-				$scope.formAdd.task.extras.push(a);
+			if (!$scope.formAdd.task.extras.some(e => e.text === extra.text)) {
+				$scope.formAdd.task.extras.push(extra);
 			}			
 		}
 		console.log($scope.formAdd.task);
@@ -87,14 +100,14 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
 		$http.post('/api/template', $scope.formGet)
 			.then(function(res) {
 				var t = res.data;
-				console.log(t);
-				//var t = "This is\n bullshit";
-				if($scope.formGet.task.idrequired)
-					$scope.template =  t.replace("(userid)",$scope.formGet.userid);
-				else
-					$scope.template =  t;
-				
-				
+				//console.log(t);
+				var ex = $scope.formGet.task.extras;
+				for(i = 0; i < ex.length; i++){
+					var r = $('input[name=' + ex[i].text + "]").val();
+					t = t.replace("(" + ex[i].text + ")",r);
+					//console.log(r)
+				}
+				$scope.template = t;
 				//console.log(t);
 				//$scope.formGet = {};
 			}, function(err) {
@@ -136,7 +149,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
 		$http.get("api/topics",{params: {projectId: id}})
 			.then(function(res) {
 				$scope.topics = res.data;
-				console.log(res);
+				//console.log(res);
 			}, function(err) {
 				console.log('Error: ' + err);
 			});
@@ -145,19 +158,18 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
 	$scope.getTasks = function(topic){
 		var p = $scope.formGet.projId;
 		var t = $scope.formGet.topicId;
-		console.log(p + '\n' + t);
+		//console.log(p + '\n' + t);
 		if (p==null || t ==null) return;
 		$http.get("api/tasks",{params: {projectId: p, topicId: t }})
 			.then(function(res) {
 				$scope.tasks = res.data;
-				console.log(res);
+				//console.log(res);
 			}, function(err) {
 				console.log('Error: ' + err);
 			});
 	}  
 
 })
-
 .directive('editableSelect', function() {
   return {
     restrict: 'E',
