@@ -8,15 +8,17 @@
 // getTask
 // restructure project
 
-angular.module('scotchTodo',['ngAnimate', 'toaster']).controller('mainController', function($scope, $http, toaster) {
+angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput'])
+
+.controller('mainController', function($scope, $http, toaster) {
 
     $scope.formGet = {};
-	$scope.formAdd = { projname: '', topicname: '', taskname: '', template: ''};
+	$scope.formAdd = {};
 	$scope.projs = {};
 	$scope.topics = {};
 	$scope.tasks = {};
 	$scope.template = "";
-
+	$scope.extras = {};
     // when landing on the page, get all todos and show them
     $http.get('/api/projects')
         .then(function(res) {
@@ -25,20 +27,25 @@ angular.module('scotchTodo',['ngAnimate', 'toaster']).controller('mainController
         }, function(err) {
             console.log('Error: ' + err);
         });
-
-    // when submitting the add form, send the text to the node API
+	
+	$http.get('/api/extras')
+		.then(function(res) {
+			$scope.extras = res.data;
+		},function(err){
+			console.log('Error: ' + err);
+        });
+    
+	// when submitting the add form, send the text to the node API
     $scope.submitForm = function(isValid) {
 		$scope.submitted = true;
-		if($scope.formAdd.projname.length > 0) $scope.formAdd.addType = "project";
-		if($scope.formAdd.topicname.length > 0) $scope.formAdd.addType = "topic";
-		if($scope.formAdd.taskname.length > 0) $scope.formAdd.addType = "task";
-		alert($scope.formAdd.addType)
 		if(isValid){
 			$http.post('/api/add', $scope.formAdd)
 			.then(function(res) {
-				$scope.tasks = res.data;
-				console.log(res);
-				toaster.pop('success', null, res.data, 2000, 'trustedHtml');
+				//$scope.tasks = res.data;
+				console.log(res.data);
+				toaster.pop('success', null, res.data.msg, 2000, 'trustedHtml');
+				$scope.formAdd = {};
+				$scope.projs = res.data.projs;
 			}, function(err) {
 				console.log('Error: ' + err);
 			})
@@ -57,6 +64,24 @@ angular.module('scotchTodo',['ngAnimate', 'toaster']).controller('mainController
             });
 		*/
     };
+	
+	function isEmpty(obj) {
+		for ( name in obj) {
+			return false;
+		}
+		return true;
+	}
+	
+	$scope.addField = function(extra){
+		console.log(extra);
+		var a = {text : extra};
+		if(!isEmpty($scope.formAdd.task)) {
+			if (!$scope.formAdd.task.extras.some(e => e.text === extra)) {
+				$scope.formAdd.task.extras.push(a);
+			}			
+		}
+		console.log($scope.formAdd.task);
+	}
 	
 	$scope.getTemplate = function() {
 		$http.post('/api/template', $scope.formGet)
@@ -105,7 +130,8 @@ angular.module('scotchTodo',['ngAnimate', 'toaster']).controller('mainController
     };
 	
 	$scope.getTopics = function(id){
-		console.log(id);
+		//var id = proj._id;
+		//console.log(proj);
 		if (id==null) return;
 		$http.get("api/topics",{params: {projectId: id}})
 			.then(function(res) {
@@ -116,7 +142,9 @@ angular.module('scotchTodo',['ngAnimate', 'toaster']).controller('mainController
 			});
 	}
 	
-	$scope.getTasks = function(p,t){
+	$scope.getTasks = function(topic){
+		var p = $scope.formGet.projId;
+		var t = $scope.formGet.topicId;
 		console.log(p + '\n' + t);
 		if (p==null || t ==null) return;
 		$http.get("api/tasks",{params: {projectId: p, topicId: t }})
@@ -128,4 +156,58 @@ angular.module('scotchTodo',['ngAnimate', 'toaster']).controller('mainController
 			});
 	}  
 
-});
+})
+
+.directive('editableSelect', function() {
+  return {
+    restrict: 'E',
+    require: '^ngModel',
+	transclude: true,
+    scope: {
+      ngModel: '=',
+	  input: '=',
+      options: '=',
+      other: '@',
+	  name: '@',
+	  holder: '@',
+	  output:'='
+    },
+    replace: true,
+    templateUrl: 'editable-select-tpl.html', 
+    link: function(scope, element) {
+      scope.isDisabled = true;
+	  
+      scope.click = function(option) {
+        
+        scope.isDisabled = !scope.other || scope.other !== option;
+        if (!scope.isDisabled) { // If other is selected
+			scope.ngModel = {name: option};
+			element[0].querySelector('.editable-select').focus();
+        }
+		else{
+			scope.ngModel = option;
+			
+			//var r = scope.options.filter((s) => s._id === option._id);
+			
+		}
+
+		//console.log(option);
+      };
+      
+      var unwatch = scope.$watch('ngModel', function(val) {
+        if (!scope.isDisabled) {
+          //scope.other = scope.ngModel.name;
+        }
+		if(scope.name == "project"){
+			scope.input.task = {};
+			scope.input.topic = {};
+		}
+		else if(scope.name == "topic"){
+			scope.input.task = {};
+		}
+      });
+      
+      scope.$on('$destroy', unwatch);
+    }
+  };
+}); 
