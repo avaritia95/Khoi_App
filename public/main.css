@@ -64,3 +64,14 @@ input[name="editable-select"]{
 .css-form input.ng-valid.ng-touched {
 	background-color: #78FA89;
 }
+
+._720kb-datepicker-calendar-day._720kb-datepicker-today {
+  background:red;
+  color:white;
+}
+
+/* .nav-link.active,
+  .show > .nav-link {
+    color: $nav-pills-link-active-color;
+    background-color: #333333 !important;
+  } */
