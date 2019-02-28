@@ -73,6 +73,16 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		return true;
 	}
 	
+	$scope.getEmail = function(code){
+		$http.post('/api/email', {code: code})
+			.then(function(res) {
+				console.log(res);
+				$scope.email_template = res.data;
+			}, function(err) {
+				console.log('Error: ' + err);
+			})
+	}
+	
 	$scope.checkDateTag = function(obj){
 		if(!isEmpty(obj)){
 			for(i = 0; i < obj.extras.length; i++){
@@ -115,8 +125,8 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 			})
     };
 	
-	$scope.copyToClipboard = function(){
-		var doc = document.getElementById('textareaShow');
+	$scope.copyToClipboard = function(textareaId){
+		var doc = document.getElementById(textareaId);
 		doc.select();
 		document.execCommand('copy');
 	};
