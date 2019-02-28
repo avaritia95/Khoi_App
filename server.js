@@ -36,6 +36,10 @@
 		{text:"reason", des:"Reason"},
 		]; //extra features for template
 	
+	var countryMail = [
+		{code: "DE", country: "Germany/Africa", mail: "accounting.lufthansa-germany@icat.dlh.de"},
+		{code: "UK", country: "Europe/Israel", mail: "Accounting.lufthansa@icat.dlh.de"},
+	];
 	// define model =================
 	var taskSchema = new Schema(
 	{	
@@ -107,34 +111,6 @@
 		return null;
 	}
 	
-	function createTopic(proj, req){
-		var newtopic = new Topic({
-			name: req.body.topicname,
-			description: req.body.topicdes,
-			tasks: []
-		})
-	    proj.topics.push(newtopic);
-		
-		return proj.topics[proj.topics.length-1];
-	}
-	
-	function findTask(topic, name){
-		for(i in topic.tasks){
-			if (topic.tasks[i].name = name) return topic.tasks[i];	
-		}
-		return null;
-	}
-	
-	function createTask(topic, req){
-		var newtask = new Task({
-			name: req.body.taskname,
-			description: req.body.taskdes,
-			idrequired: true,
-			template: req.body.template
-		})
-		topic.tasks.push(newtask);
-		return topic.tasks[topic.tasks.length-1];
-	}
 	
 	function isEmpty(objectInput) {
 		for ( name in objectInput) {
@@ -142,6 +118,13 @@
 		}
 		return true;
 	}
+	
+	app.post('/api/email', function(req,res) {
+		var code = req.body.code.slice(0,2);
+		for(i = 0; i < countryMail.length; i++)
+			if(countryMail[i].code == code) { res.send("Please forward this email to " + countryMail[i].mail); return; }
+		res.send("Cannot find email according to this code");
+	})
     // create project
     app.post('/api/add', function(req, res) {
         // Find project, create new if not exist
