@@ -15,6 +15,7 @@
 	<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/2.1.0/toaster.min.css" rel="stylesheet" />
 	<link rel="stylesheet" href="http://mbenford.github.io/ngTagsInput/css/ng-tags-input.min.css" />
+	<link href="angularjs-datepicker/src/css/angular-datepicker.css" rel="stylesheet" type="text/css" />
 	<link rel="stylesheet" href="main.css">
     <style>
         html                    { overflow-y:scroll; }
@@ -33,6 +34,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/2.1.0/toaster.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"></script>
 	<script src="http://mbenford.github.io/ngTagsInput/js/ng-tags-input.min.js"></script>
+	<script src="angularjs-datepicker/src/js/angular-datepicker.js"></script> 
 	<script src="core.js"></script>
 
 </head>
@@ -76,9 +78,16 @@
 								</select>
 							</div>
 							
-							<div>
-								<div class="form-group">
-							
+							<div ng-if="formGet.task!=null">
+								<div ng-if="checkDateTag(formGet.task)" class='form-group'>
+									<label>Date</label>
+									<datepicker date-format="dd/MM/yyyy">
+									  <input class="form-control" name="date" type="text"/>
+									</datepicker>
+								</div>
+								<div class="form-group" ng-repeat="extra in formGet.task.extras | filter: filterDateTag ">
+									<label>{{extra.des}}</label>
+									<input name="{{ extra.text }}" type="text" class="form-control"/>
 								</div>
 							</div>
 							
@@ -145,11 +154,11 @@
 							
 							<div class="form-group">
 								<label>Extra fields:</label>
-								<select class="form-control" ng-change="addField(extra)" ng-model="extra" ng-options="extra for extra in extras">
+								<select class="form-control" ng-change="addField(extra)" ng-model="extra" ng-options="extra.des for extra in extras">
 									<option value="">Add extra fields</option>
 								</select>
 								
-								<tags-input ng-model="formAdd.task.extras"></tags-input>
+								<tags-input display-property="text" ng-model="formAdd.task.extras"></tags-input>
 							</div>
 
 							<button type="submit" class="btn btn-primary btn-lg">Add</button>
