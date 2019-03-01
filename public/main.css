@@ -31,6 +31,17 @@ input[name="editable-select"]{
   background-color: #eeeeee;
 }
 
+.nav-link.active,
+	.show > .nav-link {
+		color: white;
+		background-color: #B22222 !important;
+	}
+
+.nav-link,
+	.show > .nav-link {
+		color: white;
+		background-color: none;
+	}
 
 .form-group input[type="checkbox"] {
     display: none;

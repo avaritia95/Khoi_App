@@ -34,11 +34,14 @@
 		{text:"pmid", des:"Payment ID"},
 		{text:"date", des:"Date"},
 		{text:"reason", des:"Reason"},
+		{text:"username", des:"User Name"},
 		]; //extra features for template
 	
 	var countryMail = [
 		{code: "DE", country: "Germany/Africa", mail: "accounting.lufthansa-germany@icat.dlh.de"},
 		{code: "UK", country: "Europe/Israel", mail: "Accounting.lufthansa@icat.dlh.de"},
+		{code: "US", country: "United States", mail: "us.passage.vendors@icat.dlh.de"},
+		{code: "CAN", country: "Canada", mail: "ca.accounting.vendors@icat.dlh.de"},
 	];
 	// define model =================
 	var taskSchema = new Schema(
@@ -120,9 +123,9 @@
 	}
 	
 	app.post('/api/email', function(req,res) {
-		var code = req.body.code.slice(0,2);
+		var code = req.body.code;
 		for(i = 0; i < countryMail.length; i++)
-			if(countryMail[i].code == code) { res.send("Please forward this email to " + countryMail[i].mail); return; }
+			if(countryMail[i].code == code) { res.send("Forwarded the payment to the responsible accounting team: " + countryMail[i].mail); return; }
 		res.send("Cannot find email according to this code");
 	})
     // create project

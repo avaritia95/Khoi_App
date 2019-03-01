@@ -23,7 +23,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
     $http.get('/api/projects')
         .then(function(res) {
             $scope.projs = res.data;
-            //console.log(res);
+            console.log(res);
         }, function(err) {
             console.log('Error: ' + err);
         });
