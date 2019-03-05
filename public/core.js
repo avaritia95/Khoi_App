@@ -19,7 +19,8 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 	$scope.tasks = {};
 	$scope.template = "";
 	$scope.extras = {};
-    // when landing on the page, get all todos and show them
+    
+	// when landing on the page, get all todos and show them
     $http.get('/api/projects')
         .then(function(res) {
             $scope.projs = res.data;
@@ -35,6 +36,13 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 			console.log('Error: ' + err);
         });
     
+	$http.get('/api/email')
+		.then(function(res) {
+			$scope.countries = res.data;
+		},function(err){
+			console.log('Error: ' + err);
+        });
+		
 	// when submitting the add form, send the text to the node API
     $scope.submitForm = function(isValid) {
 		$scope.submitted = true;
@@ -73,27 +81,25 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		return true;
 	}
 	
-	$scope.getEmail = function(code){
-		$http.post('/api/email', {code: code})
+	$scope.clearTextArea = function(){
+		$scope.template = "";
+	}
+	
+	$scope.createMailTemplate = function(c){
+		$scope.email_template = "Please forward this email to" + c.mail;
+	}
+	
+	$scope.addExtra = function(t){
+		if (t != null && t != ""){
+			$http.post('/api/extras', {tag: t})
 			.then(function(res) {
 				console.log(res);
-				$scope.email_template = res.data;
+				toaster.pop('success', null, "New field is added successfully", 2000, 'trustedHtml');
+				$scope.extras = res.data;
 			}, function(err) {
 				console.log('Error: ' + err);
 			})
-	}
-	
-	$scope.checkDateTag = function(obj){
-		if(!isEmpty(obj)){
-			for(i = 0; i < obj.extras.length; i++){
-				if(obj.extras[i].text === "date") return true;
-			}
 		}
-		return false;
-	}
-	$scope.filterDateTag = function(a){
-		if(a.text == "date") return false;
-		return true;
 	}
 	
 	$scope.addField = function(extra){
@@ -153,8 +159,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
     };
 	
 	$scope.getTopics = function(id){
-		//var id = proj._id;
-		//console.log(proj);
+		$scope.clearTextArea();
 		if (id==null) return;
 		$http.get("api/topics",{params: {projectId: id}})
 			.then(function(res) {
@@ -165,9 +170,11 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 			});
 	}
 	
-	$scope.getTasks = function(topic){
-		var p = $scope.formGet.projId;
-		var t = $scope.formGet.topicId;
+	$scope.getTasks = function(projId,topicId){
+		$scope.clearTextArea();
+		//$scope.formGet.tasks = {};
+		var p = projId;
+		var t = topicId;
 		//console.log(p + '\n' + t);
 		if (p==null || t ==null) return;
 		$http.get("api/tasks",{params: {projectId: p, topicId: t }})

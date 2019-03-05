@@ -84,36 +84,34 @@
 					<div class="col-sm-4">
 						<form class="form-horizontal">
 							<div class="form-group">
-								<label style = "color:white"><h5><strong>PROJECT</strong></h5></label>
-								<select class="form-control" ng-change="getTopics(formGet.projId)" ng-model="formGet.projId" ng-options="proj._id as proj.name for proj in projs">
-									<option value="">Select your project</option>
+								<label>Project</label>
+								<select class="form-control" ng-change="getTopics(formGet.proj._id)" ng-model="formGet.proj" ng-options="proj as proj.name for proj in projs">
+									<option value="" selected disabled>Select your project</option>
 								</select>
 							</div>
 						  
 							<div class="form-group">
-								<label style = "color:white"><h5><strong>TOPIC</strong></h5></label>
-								<select class="form-control" ng-change="getTasks(formGet.projId, formGet.topicId)" ng-model="formGet.topicId" ng-options="topic._id as topic.name for topic in topics">
-									<option value="">Select your topic</option>
+								<label>Topic</label>
+								<select class="form-control" ng-change="getTasks(formGet.proj._id, formGet.topic._id)" ng-model="formGet.topic" ng-options="topic as topic.name for topic in formGet.proj.topics">
+									<option value="" selected disabled>Select your topic</option>
 								</select>
 							</div>
 						  
 							<div class="form-group">
-								<label style = "color:white"><h5><strong>TASK</strong></h5></label>
-								<select class="form-control" ng-change="showExtra(formGet.task)" ng-model="formGet.task" ng-options="task as task.name for task in tasks">
-									<option value="">Select your task</option>
+								<label>Task</label>
+								<select class="form-control" ng-change="clearTextArea()" ng-model="formGet.task" ng-options="task as task.name for task in formGet.topic.tasks">
+									<option value="" selected disabled>Select your task</option>
 								</select>
 							</div>
 							
 							<div ng-if="formGet.task!=null">
-								<div ng-if="checkDateTag(formGet.task)" class='form-group'>
-									<label style = "color:white"><h7><strong>Date</strong></h7></label
-									<datepicker date-format="dd/MM/yyyy">
+								<div class="form-group" ng-repeat="extra in formGet.task.extras">
+									<label ng-if="extra.text=='date'">Date</label>
+									<datepicker ng-if="extra.text=='date'" date-format="dd/MM/yyyy">
 									  <input class="form-control" name="date" type="text"/>
 									</datepicker>
-								</div>
-								<div class="form-group" ng-repeat="extra in formGet.task.extras | filter: filterDateTag ">
-									<label style = "color:white"><h7><strong>{{extra.des}}</strong></h7></label>
-									<input name="{{ extra.text }}" type="text" class="form-control"/>
+									<label ng-if="extra.text!='date'">{{extra.des}}</label>
+									<input ng-if="extra.text!='date'" name="{{ extra.text }}" type="text" class="form-control"/>
 								</div>
 							</div>
 							
@@ -186,30 +184,17 @@
 								<tags-input display-property="text" ng-model="formAdd.task.extras"></tags-input>
 							</div>
 
-							<button type="submit" class="button buttonAdd">ADD</button>
+							<button type="submit" class="btn btn-primary btn-lg">Add</button>
+						
+							<div class="form-group input-group mb-3" style="margin-top:20px">
+								<input type="text" class="form-control" ng-model="newTag" placeholder="Add new extras field here" aria-label="Recipient's username" aria-describedby="button-addon2">
+								<div class="input-group-append">
+									<button class="btn btn-outline-secondary" ng-click="addExtra(newTag)" type="button" id="button-addon2">Add</button>
+								</div>
+							</div>
+
 						</form>
 					</div>
-					
-					<!-- <div class="col-sm-4">
-						<form class="form-horizontal">
-							<div class="form-group">
-								<label>Project Description</label>
-								<input type="text" class="form-control" placeholder="Project description" ng-model="formAdd.proj.description">
-							</div>
-						  
-							<div class="form-group">
-								<label>Topic Description</label>
-								<input type="text" class="form-control" placeholder="Topic description" ng-model="formAdd.topic.description">
-							</div>
-						  
-							<div class="form-group">
-								<label>Task Description</label>
-								<input type="text" class="form-control" placeholder="Task description" ng-model="formAdd.task.description">
-							</div>
-							
-						  
-						</form>
-					</div> -->
 					
 					<div class="col-sm-6">						  
 						<div class="form-group border-primary textarea-container">						  
@@ -221,21 +206,23 @@
 			</div>
 			<div id="menu3" class="tab-pane fade">
 				<div class="row" style="margin-top:20px">
-					<div class="col-sm-6">
-						<div class="form-group">
-							<label style = "color:white"><h5><strong>COUNTRY CODE</strong></h5></label><br>
-							<input type="text" ng-model="country_code" style="border-radius:8px">
-							<button type="button" class="button buttonGet" ng-click="getEmail(country_code)" style = "margin-left:20px"><h5><strong>GET EMAIL</strong></h5></button>
+					<div class="col-sm-7">
+						<div class="form-group input-group mb-3" style="margin-top:20px">
+							<div class="input-group-prepend">
+								<span class="input-group-text">Country</span>
+							</div>
+							<select class="form-control" ng-click="createMailTemplate(country)" ng-model="country" ng-options="c as c.country for c in countries">
+								<option value="" selected disabled>Select your country</option>
+							</select>
 						</div>
+
+						
 					</div>
-					<div class="col-sm-6">
-						<div class="form-group border-primary textarea-container">						  
-							<label for="textareaShow" style="color:white"><h5><strong>TEMPLATE</strong></h5></label>
-							<textarea id = "textareaMail" class="form-control rounded-0" ng-model="email_template" rows="3"></textarea>
-							<button type="button" class="button buttonCopy" ng-click="copyToClipboard('textareaMail')">
-								<span class="fa fa-copy"></span><h7><strong> COPY </strong></h7> 
-							</button>
-						</div>
+					<div class="col-sm-5">
+						<textarea id = "textareaMail" class="form-control rounded-0" ng-model="email_template" rows="3"></textarea>
+						<button type="button" class="btn btn-info btn-lg" ng-click="copyToClipboard('textareaMail')">
+						  <span class="fa fa-copy"></span> Copy 
+						</button>
 					</div>
 				</div>	
 			</div>
