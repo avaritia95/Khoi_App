@@ -28,18 +28,14 @@
     app.use(bodyParser.json({ type: 'application/vnd.api+json' })); // parse application/vnd.api+json as json
     app.use(methodOverride());
 
-	var extras = [
-		{text:"uid", des:"User ID"}, 
-		{text: "fbid", des:"Feedback ID"},
-		{text:"pmid", des:"Payment ID"},
-		{text:"date", des:"Date"},
-		{text:"reason", des:"Reason"},
-		]; //extra features for template
+	// var extras = [
+		// {text:"uid", des:"User ID"}, 
+		// {text: "fbid", des:"Feedback ID"},
+		// {text:"pmid", des:"Payment ID"},
+		// {text:"date", des:"Date"},
+		// {text:"reason", des:"Reason"},
+		// ]; //extra features for template
 	
-	var countryMail = [
-		{code: "DE", country: "Germany/Africa", mail: "accounting.lufthansa-germany@icat.dlh.de"},
-		{code: "UK", country: "Europe/Israel", mail: "Accounting.lufthansa@icat.dlh.de"},
-	];
 	// define model =================
 	var taskSchema = new Schema(
 	{	
@@ -67,25 +63,24 @@
 		topics: [topicSchema]
 	})
 	var Project = mongoose.model('Project',projectSchema);
-	
+	var Extra = mongoose.model('Extra', new Schema ({text: String, des: String}))
+	var Email = mongoose.model('Email', new Schema ({code: String, mail: String}))
 
 	// routes ======================================================================
 
     // api ---------------------------------------------------------------------
     // get all todos
     app.get('/api/projects', function(req, res) {		
-        // use mongoose to get all todos in the database
-        Project.find(function(err, projs) {
-            // if there is an error retrieving, send the error. nothing after res.send(err) will execute
+        /* Project.find(function(err, projs) {
             if (err)
                 res.send(err)
             res.json(projs); // return all todos in JSON format
-        });		
-		//res.json(projects)
+        }); */		
+		getProjects().then(p=>res.send(p));
     });
 	
 	app.get('/api/extras', function(req, res) {		
-		res.json(extras)
+		getExtras().then(e=>res.send(e));
     });
 	
 	app.get('/api/topics', function(req, res) {
@@ -104,13 +99,21 @@
         });
 	});
 	
-	function findTopic(proj, name){
-		for(i in proj.topics){
-			if (proj.topics[i].name = name) return proj.topics[i];	
-		}
-		return null;
+	async function getExtras(){
+		var extras = await Extra.find(function(err, ex) {
+            if (err) console.log(err);
+            return ex;
+        });
+		return extras;
 	}
 	
+	async function getProjects(){
+		var projects = await Project.find(function(err, projs) {
+            if (err) console.log(err);
+            return projs;
+        });
+		return projects;
+	}
 	
 	function isEmpty(objectInput) {
 		for ( name in objectInput) {
@@ -119,27 +122,42 @@
 		return true;
 	}
 	
-	app.post('/api/email', function(req,res) {
-		var code = req.body.code.slice(0,2);
-		for(i = 0; i < countryMail.length; i++)
-			if(countryMail[i].code == code) { res.send("Please forward this email to " + countryMail[i].mail); return; }
-		res.send("Cannot find email according to this code");
+	app.get('/api/email', function(req,res) {
+		Email.find(function(err,m){
+			if(err) console.log(err);
+			res.send(m);
+		});
 	})
+	
+	app.post('/api/extras', function(req,res) {
+		var tag = req.body.tag;
+		var trimtag = tag.toLowerCase().replace(/\s/g,'');
+		var options = { upsert: true, new: true, setDefaultsOnInsert: true };
+		
+		Extra.findOneAndUpdate({text: trimtag},{text: trimtag, des: tag},options,function(err,doc){
+			if(err) console.log(err);
+			getExtras().then(e => res.send(e));
+		});
+	})
+	
     // create project
     app.post('/api/add', function(req, res) {
-        // Find project, create new if not exist
-		// Find topic, create new if not exist
-		// Find task, create new if not exist
+        // Case 1: Update project -> Same ID, same name
+		// Case 2: Create new project -> New ID, new name
+		// Case 3: Create new project but same name -> New ID, same name
+		// Update when same ID, insert when new ID and different name
 		var data = req.body;
 		var msg = "";
 		console.log(data);
 		var update = {name : data.proj.name};
-		var query = data.proj._id ? {_id: data.proj._id} : {_id:  new ObjectId()};
+		var query = {$or: [{_id: data.proj._id},{name: data.proj.name}]};
 		var options = { upsert: true, new: true, setDefaultsOnInsert: true };
+		
+		
 		Project.findOneAndUpdate(query, update, options, function(err, doc){
 			if (err) {console.log(err); return;}
 			
-			if(isEmpty(data.task) && isEmpty(data.topic)) { msg = "Project upsert successfully"; return; }
+			if(isEmpty(data.task) && isEmpty(data.topic)) { msg = "Project upsert successfully";}
 			
 			if(!isEmpty(data.topic)){ //If upsert topic
 				var newtopic = new Topic({
@@ -206,115 +224,17 @@
 							if(isEmpty(data.task)) msg = "Topic upsert successfully";
 							else msg = "Task upsert successfully";
 						}
-						Project.find(function(err, projs) {
-							if (err)
-								res.send(err)
-							result = {"projs" : projs, "msg" : msg};
-							res.json(result); // return all todos in JSON format
-						});
+						
 					}
 				);
 			}
+			Project.find(function(err, projs) {
+				if (err)
+					res.send(err)
+				result = {"projs" : projs, "msg" : msg};
+				res.json(result); // return all todos in JSON format
+			});
 		});
-		
-		/*
-		switch(data.addType){	
-			case "project":
-				var data = req.body;
-				var update = {name : data.proj.name, description: data.proj.description};
-				var query = data.proj._id ? {_id: data.proj._id} : {_id:  new ObjectId()};
-				var options = { upsert: true, new: true, setDefaultsOnInsert: true };
-				Project.findOneAndUpdate(query, update, options, function(err, doc){
-					if (err) {console.log(err); return err;}
-					else res.send("Project is created successfully");
-				})
-				break;
-			case "topic":
-				Project.findOneAndUpdate(query, update, options, function(err, doc){
-					if (err) {console.log(err); return;}
-					
-					var newtopic = new Topic({
-						_id: new ObjectId(),
-						name: data.topic.name,
-						description: data.topic.description,
-						tasks: []
-					})
-
-					Project.update(
-						{_id: doc._id, "topics._id" : { $ne: data.topic._id }},
-						{$push : { topics : newtopic }},
-						function(err,affected){
-							if(err) console.log(err);
-							console.log(affected);
-							if(affected.nModified === 0){
-								Project.update(
-									{_id: doc._id, "topics._id" : data.topic._id },
-									{$set : { 'topics.$.name' : data.topic.name, 'topics.$.description' : data.topic.description}},
-									function(e,a){
-										if(e) console.log(e);
-										console.log(a);
-									}
-								);
-							}
-						}
-					);
-				});	
-				res.send("Topic is created successfully");
-				break;				
-			case "task":
-				Project.findOneAndUpdate(query, update, options, function(err, doc){
-					if (err) {console.log(err); return;}
-					
-					var newtopic = new Topic({
-						_id: new ObjectId(),
-						name: data.topic.name,
-						description: data.topic.description,
-						tasks: []
-					})
-					
-					var newtask = new Task({
-						_id: new ObjectId(),
-						name: data.task.name,
-						description: data.task.description,
-						idrequired: true,
-						template: data.template
-					})
-					newtopic.tasks.push(newtask);					
-					Project.updateOne(
-						{_id: doc._id, "topics._id" : { $ne: data.topic._id }},
-						{$push : { topics : newtopic }},
-						function(err,affected){
-							if(err) console.log(err);
-							console.log(affected);
-							if(affected.nModified === 0){
-								Project.updateOne(
-									{_id: doc._id, "topics._id" : data.topic._id, "topics.tasks._id" : { $ne: data.task._id }},
-									{$set : { 'topics.$.name' : data.topic.name, 'topics.$.description' : data.topic.description},
-									 $push: { 'topics.$.tasks': newtopic}
-									},
-									function(e,a){
-										if(e) console.log(e);
-										if(a.nModified === 0){
-											Project.updateOne(
-												{_id: doc._id, "topics._id" : data.topic._id, "topics.tasks._id" : data.task._id},
-												{$set : { 'topics.$.name' : data.topic.name, 'topics.$.description' : data.topic.description,
-												'topics.$.tasks.$[task].name': data.task.name, 'topics.$.tasks.$[task].description': data.task.description, 'topics.$.tasks.$[task].template' : data.template}},
-												{ arrayFilters: [{ 'task._id': data.task._id }] },
-												function(e1,a1){
-													if(e1) console.log(e1);
-													console.log(a1);
-												})
-										}
-										console.log(a);
-									}
-								);
-							}
-						}
-					);
-				});
-				res.send("Task is created successfully");
-				break;
-		}*/		
     });
 	
 	// create topics
@@ -358,16 +278,16 @@
 	
 	app.post('/api/template', function(req, res) {
         
-		console.log(req.body.projId);
-		console.log(req.body.topicId);
+		console.log(req.body.proj._id);
+		console.log(req.body.topic._id);
 		console.log(req.body.task._id);
-		Project.findById(req.body.projId, 
+		Project.findById(req.body.proj._id, 
 			function (err, doc) {
 				console.log(doc.topics);
 				if (err) {
 					console.log(err);
 				}				
-				res.json(doc.topics.id(req.body.topicId).tasks.id(req.body.task._id).template);
+				res.json(doc.topics.id(req.body.topic._id).tasks.id(req.body.task._id).template);
 			});
     });
 	
