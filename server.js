@@ -10,8 +10,8 @@
 	
 	Schema = mongoose.Schema;
     // configuration =================
-
-    mongoose.connect('mongodb://127.0.0.1/mydb', {useNewUrlParser: true});     // connect to mongoDB database on modulus.io
+	mongoose.connect('mongodb://mongo:27017/mydb', {useNewUrlParser: true});
+    //mongoose.connect('mongodb://127.0.0.1/mydb', {useNewUrlParser: true});     // connect to mongoDB database on modulus.io
 	//Ép Mongoose sử dụng thư viện promise toàn cục
 	mongoose.Promise = global.Promise;
 	//Lấy kết nối mặc định
@@ -327,6 +327,9 @@
         res.sendFile('./public/index.html'); // load the single view file (angular will handle the page changes on the front-end)
     });
 	
+	const PORT = 8080;
 	// listen (start app with node server.js) ======================================
-    app.listen(8080);
-    console.log("App listening on port 8080");
+    app.listen(PORT,function(){
+		 console.log('Your node js server is running on PORT:',PORT);
+	});
+   
