@@ -86,7 +86,14 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 	}
 	
 	$scope.createMailTemplate = function(c){
-		$scope.email_template = "Please forward this email to" + c.mail;
+		if(!isEmpty(c)){
+			$scope.email_template = "Forwarded the payment ticket to the responsible accounting team " + c.mail.bold();
+			// Start selection from 65
+			var doc = document.getElementById("fakeTextAreaMail");
+			doc.innerHTML = $scope.email_template;
+			//doc.setSelectionRange(65,$scope.email_template.length);
+			//document.execCommand("bold");
+		}
 	}
 	
 	$scope.addExtra = function(t){
@@ -123,7 +130,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 					t = t.replace("(" + ex[i].text + ")",r);
 					//console.log(r)
 				}
-				$scope.template = t;
+				$scope.template = t;				
 				//console.log(t);
 				//$scope.formGet = {};
 			}, function(err) {
@@ -137,6 +144,31 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		document.execCommand('copy');
 	};
 	
+	$scope.copyToClipboardwithFormat = function(element) {
+			var doc = document
+			var text = doc.getElementById(element)
+			var range; var selection;
+		
+		if (doc.body.createTextRange)
+		{
+			range = doc.body.createTextRange();
+			range.moveToElementText(text);
+			range.select();
+		} 
+		
+		else if (window.getSelection)
+		{
+			selection = window.getSelection();        
+			range = doc.createRange();
+			range.selectNodeContents(text);
+			selection.removeAllRanges();
+			selection.addRange(range);
+		}
+		document.execCommand('copy');
+		window.getSelection().removeAllRanges();
+		document.getElementById("btn").value="Copied";
+	}
+
 	$scope.clearTodo = function() {
 		$http.post('/api/clear', {})
 			.then(function(res) {
