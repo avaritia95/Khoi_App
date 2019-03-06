@@ -194,8 +194,9 @@
 						
 					</div>
 					<div class="col-sm-5">
-						<textarea id = "textareaMail" class="form-control rounded-0" ng-model="email_template" rows="3"></textarea>
-						<button type="button" class="btn btn-info btn-lg" ng-click="copyToClipboard('textareaMail')">
+						<div id="fakeTextAreaMail" class="fakeTextArea" contenteditable>{{email_template}}</div>
+						<textarea hidden id = "textareaMail" class="form-control rounded-0" ng-model="email_template" rows="3"></textarea>
+						<button type="button" class="btn btn-info btn-lg" ng-click="copyToClipboardwithFormat('fakeTextAreaMail')">
 						  <span class="fa fa-copy"></span> Copy 
 						</button>
 					</div>
