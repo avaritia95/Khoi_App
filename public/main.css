@@ -47,12 +47,12 @@ input[name="editable-select"]{
 .nav-link.active,
 	.show > .nav-link {
 		color: white;
-		background-color: #B22222 !important;
+		background-color: #006400 !important;
 	}
 
 .nav-link,
 	.show > .nav-link {
-		color: white;
+		color: black;
 		background-color: none;
 	}
 

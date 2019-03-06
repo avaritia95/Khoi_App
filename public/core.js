@@ -88,11 +88,9 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 	$scope.createMailTemplate = function(c){
 		if(!isEmpty(c)){
 			$scope.email_template = "Forwarded the payment ticket to the responsible accounting team " + c.mail.bold();
-			// Start selection from 65
+			
 			var doc = document.getElementById("fakeTextAreaMail");
 			doc.innerHTML = $scope.email_template;
-			//doc.setSelectionRange(65,$scope.email_template.length);
-			//document.execCommand("bold");
 		}
 	}
 	
