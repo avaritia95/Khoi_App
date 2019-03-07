@@ -1,7 +1,6 @@
 var mongoose = require('mongoose');                     // mongoose for mongodb
 
 var Schema = mongoose.Schema;
-var ObjectId = mongoose.Types.ObjectId;
 
 // define model =================
 var taskSchema = new Schema(

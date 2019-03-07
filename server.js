@@ -9,7 +9,7 @@
     var methodOverride = require('method-override'); // simulate DELETE and PUT (express4)
 	
 	var models = require('./models');				// get models from models.js
-    
+    var ObjectId = mongoose.Types.ObjectId;
 	// configuration =================
 	//mongoose.connect('mongodb://mongo:27017/mydb', {useNewUrlParser: true});
     mongoose.connect('mongodb://127.0.0.1/mydb', {useNewUrlParser: true});     // connect to mongoDB database on modulus.io
@@ -202,8 +202,9 @@
 				break;
 			}
 		}
+		
 		if(result===undefined){ // If topic not exist, insert new topic
-			var newtopic = new Topic({
+			var newtopic = new models.Topic({
 				_id: new ObjectId(),
 				name: topic.name,
 				tasks: []
@@ -232,7 +233,7 @@
 			}
 		}
 		if(isEmpty(result)){ // If task not exist, insert new task
-			var newtask = new Task({
+			var newtask = new models.Task({
 				_id: new ObjectId(),
 				name: task.name,
 				extras: task.extras,
