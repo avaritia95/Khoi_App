@@ -1,14 +1,6 @@
 // public/core.js
 
-// Add/remove function
-// Add/remove UI
-// Embedded text file in Database
-// Input validation
-// conditions for FBID,PMID, userID
-// getTask
-// restructure project
-
-angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepicker'])
+angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepicker']) // using ngAnimate, toaster, ngTagsInput, datepicker modules
 
 .controller('mainController', function($scope, $http, toaster) {
 
@@ -20,8 +12,8 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 	$scope.template = "";
 	$scope.extras = {};
     
-	// when landing on the page, get all todos and show them
-    $http.get('/api/projects')
+	// when landing on the page, get all projects and show them
+    $http.get('/api/projects') // Send GET request to specified url
         .then(function(res) {
             $scope.projs = res.data;
             console.log(res);
@@ -29,51 +21,39 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
             console.log('Error: ' + err);
         });
 	
-	$http.get('/api/extras')
+	// when landing on the page, get all extra fields and show them
+	$http.get('/api/extras')  // Send GET request to specified url
 		.then(function(res) {
 			$scope.extras = res.data;
 		},function(err){
 			console.log('Error: ' + err);
         });
     
-	$http.get('/api/email')
+	// when landing on the page, get all mails and show them
+	$http.get('/api/email')  // Send GET request to specified url
 		.then(function(res) {
 			$scope.countries = res.data;
 		},function(err){
 			console.log('Error: ' + err);
         });
 		
-	// when submitting the add form, send the text to the node API
-    $scope.submitForm = function(isValid) {
+	// when submitting the add form, send the POST request to the node API
+    $scope.submitForm = function(isValid) { // Submit form
 		$scope.submitted = true;
 		if(isValid){
 			$http.post('/api/add', $scope.formAdd)
 			.then(function(res) {
-				//$scope.tasks = res.data;
-				console.log(res.data);
 				toaster.pop('success', null, res.data.msg, 2000, 'trustedHtml');
 				$scope.formAdd = {};
 				$scope.formGet = {};
 				$scope.projs = res.data.projs;
 			}, function(err) {
-				console.log('Error: ' + err);
+				console.log('Error: ' + err.msg);
 			})
 		}
-		
-			
-		/*
-        $http.post('/api/todos', $scope.formGet)
-            .success(function(data) {
-                $scope.formGet = {}; // clear the form so our user is ready to enter another
-                $scope.todos = data;
-                console.log(data);
-            })
-            .error(function(data) {
-                console.log('Error: ' + data);
-            });
-		*/
     };
 	
+	// Check object is empty
 	function isEmpty(obj) {
 		for ( name in obj) {
 			return false;
@@ -81,10 +61,12 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		return true;
 	}
 	
+	// Clear text area
 	$scope.clearTextArea = function(){
 		$scope.template = "";
 	}
 	
+	// Create email template from email
 	$scope.createMailTemplate = function(c){
 		if(!isEmpty(c)){
 			$scope.email_template = "Forwarded the payment ticket to the responsible accounting team " + c.mail.bold();
@@ -94,11 +76,12 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		}
 	}
 	
+	// Add extra field
 	$scope.addExtra = function(t){
 		if (t != null && t != ""){
 			$http.post('/api/extras', {tag: t})
 			.then(function(res) {
-				console.log(res);
+				//console.log(res);
 				toaster.pop('success', null, "New field is added successfully", 2000, 'trustedHtml');
 				$scope.extras = res.data;
 			}, function(err) {
@@ -107,26 +90,26 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		}
 	}
 	
+	// Add tag to extra field requirement of task
 	$scope.addField = function(extra){
 		if(isEmpty($scope.formAdd.task.extras)) $scope.formAdd.task.extras = [];
 		if(!isEmpty($scope.formAdd.task)) {
-			if (!$scope.formAdd.task.extras.some(e => e.text === extra.text)) {
+			if (!$scope.formAdd.task.extras.some(e => e.text === extra.text)) { // If the task does not have this extra field, then add
 				$scope.formAdd.task.extras.push(extra);
 			}			
 		}
-		console.log($scope.formAdd.task);
+		//console.log($scope.formAdd.task);
 	}
 	
+	// Get template and replace extra fields with input values
 	$scope.getTemplate = function() {
 		$http.post('/api/template', $scope.formGet)
 			.then(function(res) {
 				var t = res.data;
-				//console.log(t);
 				var ex = $scope.formGet.task.extras;
 				for(i = 0; i < ex.length; i++){
 					var r = $('input[name=' + ex[i].text + "]").val();
 					t = t.replace("(" + ex[i].text + ")",r);
-					//console.log(r)
 				}
 				$scope.template = t;				
 				//console.log(t);
@@ -136,12 +119,14 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 			})
     };
 	
+	// Copy content of text area to clipboard 
 	$scope.copyToClipboard = function(textareaId){
 		var doc = document.getElementById(textareaId);
 		doc.select();
 		document.execCommand('copy');
 	};
 	
+	// Copy content of div to clipboard
 	$scope.copyToClipboardwithFormat = function(element) {
 			var doc = document
 			var text = doc.getElementById(element)
@@ -167,17 +152,9 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		document.getElementById("btn").value="Copied";
 	}
 
-	$scope.clearTodo = function() {
-		$http.post('/api/clear', {})
-			.then(function(res) {
-				console.log(res);
-				$scope.cats = res.data;
-			}, function(err) {
-				console.log('Error: ' + err);
-			})
-	}
 
-    // delete a todo after checking it
+    // delete - not used
+	/*
     $scope.deleteTodo = function(id) {
         $http.delete('/api/todos/' + id)
             .then(function(data) {
@@ -187,7 +164,9 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
                 console.log('Error: ' + err);
             });
     };
+	*/
 	
+	// Send request with projectID to get topic list
 	$scope.getTopics = function(id){
 		$scope.clearTextArea();
 		if (id==null) return;
@@ -200,24 +179,23 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 			});
 	}
 	
+	// Send request with projectID and topicID to get task list
 	$scope.getTasks = function(projId,topicId){
 		$scope.clearTextArea();
-		//$scope.formGet.tasks = {};
 		var p = projId;
 		var t = topicId;
-		//console.log(p + '\n' + t);
+
 		if (p==null || t ==null) return;
 		$http.get("api/tasks",{params: {projectId: p, topicId: t }})
 			.then(function(res) {
 				$scope.tasks = res.data;
-				//console.log(res);
 			}, function(err) {
 				console.log('Error: ' + err);
 			});
 	}  
 
 })
-.directive('editableSelect', function() {
+.directive('editableSelect', function() { // Directive for editable-select
   return {
     restrict: 'E',
     require: '^ngModel',
@@ -244,24 +222,19 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 			element[0].querySelector('.editable-select').focus();
         }
 		else{
-			scope.ngModel = option;
-			
-			//var r = scope.options.filter((s) => s._id === option._id);
-			
+			scope.ngModel = option;			
 		}
-
-		//console.log(option);
       };
       
       var unwatch = scope.$watch('ngModel', function(val) {
         if (!scope.isDisabled) {
           //scope.other = scope.ngModel.name;
         }
-		if(scope.name == "project"){
+		if(scope.name == "project"){ // If the select for project is being used
 			scope.input.task = {};
 			scope.input.topic = {};
 		}
-		else if(scope.name == "topic"){
+		else if(scope.name == "topic"){ // If the select for topic is being used
 			scope.input.task = {};
 		}
       });
