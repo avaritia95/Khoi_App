@@ -180,7 +180,7 @@
 							<div class="form-group">
 								<label style = "color:black"><h5><strong>EXTRA FIELDS</strong></h5></label>
 								<select class="form-control" ng-change="addField(extra)" ng-model="extra" ng-options="extra.des for extra in extras">
-									<option value="">Add extra fields</option>
+									<option ng-selected="formAdd.task==null" value="">Add extra fields</option>
 								</select>
 								
 								<tags-input display-property="text" ng-model="formAdd.task.extras"></tags-input>
