@@ -94,6 +94,12 @@ input[name="editable-select"]{
   color:white;
 }
 
+.border-round
+{
+	border-radius: 5px 5px 5px 5px;
+}
+
+
 /* .nav-link.active,
   .show > .nav-link {
     color: $nav-pills-link-active-color;

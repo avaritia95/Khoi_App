@@ -1,17 +1,31 @@
 {
-  "name": "node-todo",
+  "name": "todo",
   "version": "0.0.0",
   "description": "Simple todo application.",
   "main": "server.js",
   "author": "Scotch",
   "dependencies": {
+    "angular": "^1.6.4",
+    "angular-route": "^1.6.4",
     "angularjs-datepicker": "^2.1.23",
-    "body-parser": "~1.18.3",
-    "express": "~4.16.4",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
     "method-override": "~3.0.0",
     "mongodb": "^3.1.13",
-    "mongoose": "~5.4.8",
+    "mongoose": "^5.4.23",
     "morgan": "~1.9.1",
     "ng-tags-input": "^3.2.0"
-  }
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avaritia95/Khoi_App.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/avaritia95/Khoi_App/issues"
+  },
+  "homepage": "https://github.com/avaritia95/Khoi_App#readme"
 }
