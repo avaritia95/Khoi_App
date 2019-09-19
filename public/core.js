@@ -118,6 +118,38 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 				console.log('Error: ' + err);
 			})
     };
+	// field the Jira template with input values
+	$scope.getJiraTemplate = function()
+	{
+		var checkedAccountIDVar = $scope.checkedAccountID;
+		var figuredOutTextAreaVar = $scope.figuredOutTextArea;
+		var userEmailAddressVar = $scope.userEmailAddress;
+		var emailBodyTextAreaVar = $scope.emailBodyTextArea;
+		var additionalStepsTextAreaVar = $scope.additionalStepsTextArea;
+		var templateOutput = "ANALYSIS \n" +
+							 "-------------------------------------------------------------\n" +
+							 "checked \n" +
+							 "-------------------------------------------------------------\n" +
+							 "RESULT \n" +
+							 "-------------------------------------------------------------\n" +
+							 "figured \n" +
+							 "-------------------------------------------------------------\n" +
+							 "USER COMMUNICATION \n" +
+							 "sent mail to : email \n" +
+							 "--------------------------------------------------------------\n" +
+							 "Dear \n" +
+							 "--------------------------------------------------------------\n" +
+							 "ADDITIONAL STEPS \n" +
+							 "--------------------------------------------------------------\n" +
+							 "future" ;
+		var newTemplateOutput = templateOutput.replace(new RegExp("checked",'g'),checkedAccountIDVar)
+		.replace(new RegExp("figured",'g'),figuredOutTextAreaVar)
+		.replace(new RegExp("email",'g'),userEmailAddressVar)
+		.replace(new RegExp("Dear",'g'),emailBodyTextAreaVar)
+		.replace(new RegExp("future",'g'),additionalStepsTextAreaVar);
+		
+		$scope.templateJira = newTemplateOutput;
+	}
 	
 	// Copy content of text area to clipboard 
 	$scope.copyToClipboard = function(textareaId){
