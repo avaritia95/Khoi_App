@@ -1,19 +1,35 @@
-version: "2"
+version: "2.3"
 services:
   app:
     container_name: app
     restart: always
     build: .
     ports:
-      - "8080:8080"
+      - "8888:8888"
     links:
       - mongo
     depends_on:
       - "mongo"
+    environment:
+        WAIT_HOSTS: mongo:27017
+    volumes:
+      - ./src:/usr/src/app/src
   mongo:
     container_name: mongo
     image: mongo
+    restart: always
+    environment:
+        MONGO_INITDB_DATABASE: mydb
     volumes:
-      - ./data:/data/db
+      - ./seed.sh:/docker-entrypoint-initdb.d/seed.sh:ro
     ports:
       - "27017:27017"
+#  jira:
+#    container_name: jira
+#    image: atlassian/jira-servicedesk
+#    volumes:
+#      - jiraVolume:/var/atlassian/application-data/jira
+#    ports:
+#      - "8080:8080"
+#volumes:
+# jiraVolume:

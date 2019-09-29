@@ -1,9 +1,9 @@
 {
-  "name": "todo",
-  "version": "0.0.0",
-  "description": "Simple todo application.",
+  "name": "Khoi_App",
+  "version": "0.0.1",
+  "description": "Khoi App",
   "main": "server.js",
-  "author": "Scotch",
+  "author": "Dat",
   "dependencies": {
     "angular": "^1.6.4",
     "angular-route": "^1.6.4",
@@ -14,10 +14,15 @@
     "mongodb": "^3.1.13",
     "mongoose": "^5.4.23",
     "morgan": "~1.9.1",
-    "ng-tags-input": "^3.2.0"
+    "ng-tags-input": "^3.2.0",
+    "nodemon": "^1.8.0",
+    "request": "^2.88.0"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "nodemon server.js"
+  },
+  "devDependencies": {
+    "nodemon": "~1.3.8"
   },
   "repository": {
     "type": "git",
