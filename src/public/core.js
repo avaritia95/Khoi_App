@@ -1,42 +1,39 @@
 // public/core.js
 
-angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepicker']) // using ngAnimate, toaster, ngTagsInput, datepicker modules
-
-.controller('mainController', function($scope, $http, toaster) {
-
+angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) // using ngAnimate, toaster, ngTagsInput, datepicker modules
+.controller('mainController', function($scope, $http, toaster, $uibModal) {
     $scope.formGet = {};
 	$scope.formAdd = {};
-	$scope.projs = {};
-	$scope.topics = {};
-	$scope.tasks = {};
-	$scope.template = "";
-	$scope.extras = {};
-    
-	// when landing on the page, get all projects and show them
-    $http.get('/api/projects') // Send GET request to specified url
-        .then(function(res) {
-            $scope.projs = res.data;
-            console.log(res);
-        }, function(err) {
-            console.log('Error: ' + err);
-        });
+    $scope.jira = {};
 	
+	// when landing on the page, get all projects and show them
+    $scope.getProjects = function() {
+		$http.get('/api/projects') // Send GET request to specified url
+		.then(function(res) {
+			$scope.formGet.projs = res.data;
+			$scope.formAdd.projs = res.data;
+		}, function(err) {
+			console.log('Error: ' + err);
+		});
+	}
 	// when landing on the page, get all extra fields and show them
-	$http.get('/api/extras')  // Send GET request to specified url
+	$scope.getExtras = function() {
+		$http.get('/api/extras')  // Send GET request to specified url
 		.then(function(res) {
 			$scope.extras = res.data;
 		},function(err){
 			console.log('Error: ' + err);
         });
-    
+    }
 	// when landing on the page, get all mails and show them
-	$http.get('/api/email')  // Send GET request to specified url
-		.then(function(res) {
-			$scope.countries = res.data;
-		},function(err){
-			console.log('Error: ' + err);
-        });
-		
+	$scope.getEmails = function() {
+		$http.get('/api/email')  // Send GET request to specified url
+			.then(function(res) {
+				$scope.countries = res.data;
+			},function(err){
+				console.log('Error: ' + err);
+			});
+	}	
 	// when submitting the add form, send the POST request to the node API
     $scope.submitForm = function(isValid) { // Submit form
 		$scope.submitted = true;
@@ -53,6 +50,25 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		}
     };
 	
+	$scope.openLoginModal = function () {
+		var modalInstance = $uibModal.open({
+			ariaLabelledBy: 'modal-title',
+			ariaDescribedBy: 'modal-body',
+			templateUrl: 'partials/login.html',
+			controller: 'ModalInstanceCtrl',
+			controllerAs: '$ctrl',
+			size: 'sm',
+			windowClass : 'show'
+		});
+		console.log('Dialog opened')
+		modalInstance.result.then(function (login) {
+		  console.log(login);
+		  $scope.jira.user = login.user;
+		  $scope.jira.pass = login.pass;
+		}, function () {
+		  console.log('Modal dismissed at: ' + new Date());
+		});
+	};
 	// Check object is empty
 	function isEmpty(obj) {
 		for ( name in obj) {
@@ -119,13 +135,12 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 			})
     };
 	// field the Jira template with input values
-	$scope.getJiraTemplate = function()
-	{
-		var checkedAccountIDVar = $scope.checkedAccountID;
-		var figuredOutTextAreaVar = $scope.figuredOutTextArea;
-		var userEmailAddressVar = $scope.userEmailAddress;
-		var emailBodyTextAreaVar = $scope.emailBodyTextArea;
-		var additionalStepsTextAreaVar = $scope.additionalStepsTextArea;
+	$scope.getJiraTemplate = function(){
+		var checkedAccountIDVar = $scope.jira.checkedAccountID;
+		var figuredOutTextAreaVar = $scope.jira.figuredOutTextArea;
+		var userEmailAddressVar = $scope.jira.userEmailAddress;
+		var emailBodyTextAreaVar = $scope.jira.emailBodyTextArea;
+		var additionalStepsTextAreaVar = $scope.jira.additionalStepsTextArea;
 		var templateOutput = "ANALYSIS \n" +
 							 "-------------------------------------------------------------\n" +
 							 "checked \n" +
@@ -147,8 +162,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		.replace(new RegExp("email",'g'),userEmailAddressVar)
 		.replace(new RegExp("Dear",'g'),emailBodyTextAreaVar)
 		.replace(new RegExp("future",'g'),additionalStepsTextAreaVar);
-		
-		$scope.templateJira = newTemplateOutput;
+		$scope.jira.template = newTemplateOutput;
 	}
 	
 	// Copy content of text area to clipboard 
@@ -158,11 +172,33 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		document.execCommand('copy');
 	};
 	
+	$scope.commentTicket = function(){
+		var request = {
+			auth: btoa($scope.jira.user + ':' + $scope.jira.pass),
+			url : '/rest/api/2/issue/' + $scope.jira.ticketKey + '/comment',
+			comment: $scope.jira.template			
+		}
+		$http.post('/api/jira/comment', request).then(function(res) {
+			console.log(res.body);
+			$scope.jira.commentLink = res.data.self;
+			if(res.data.statusCode == 200) {
+				toaster.pop('success', 'New comment is added successfully', 'Link: <a href={{$scope.jira.commentLink}}>{{$scope.jira.commentLink}}</a>', 4000, 'trustedHtml');
+			}
+			else if (res.data.statusCode == 401 || res.data.statusCode == 403){
+				toaster.pop('error', 'Unauthorized access', 'Please recheck your username and password', 4000, 'trustedHtml');
+			}
+			else if (res.data.statusCode == 400){
+				toaster.pop('error', 'Invalid value or missing field', 'Please recheck comment', 4000, 'trustedHtml');
+			}
+		}, function(err) {
+			console.log(err);
+		}) 
+	}
 	// Copy content of div to clipboard
 	$scope.copyToClipboardwithFormat = function(element) {
-			var doc = document
-			var text = doc.getElementById(element)
-			var range; var selection;
+		var doc = document
+		var text = doc.getElementById(element)
+		var range; var selection;
 		
 		if (doc.body.createTextRange)
 		{
@@ -183,20 +219,6 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 		window.getSelection().removeAllRanges();
 		document.getElementById("btn").value="Copied";
 	}
-
-
-    // delete - not used
-	/*
-    $scope.deleteTodo = function(id) {
-        $http.delete('/api/todos/' + id)
-            .then(function(data) {
-                $scope.todos = data;
-                console.log(data);
-            }, function(err) {
-                console.log('Error: ' + err);
-            });
-    };
-	*/
 	
 	// Send request with projectID to get topic list
 	$scope.getTopics = function(id){
@@ -225,7 +247,17 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
 				console.log('Error: ' + err);
 			});
 	}  
+})
+.controller('ModalInstanceCtrl', function ($scope, $uibModalInstance) {
+	$scope.login = { user: 'D1234', pass: 'D1234'}
+	$scope.ok = function () {
+		console.log($scope.login);
+		$uibModalInstance.close($scope.login);
+	};
 
+	$scope.cancel = function () {
+		$uibModalInstance.dismiss('cancel');
+	};
 })
 .directive('editableSelect', function() { // Directive for editable-select
   return {
@@ -239,7 +271,7 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
       other: '@',
 	  name: '@',
 	  holder: '@',
-	  output:'='
+	  onSelect:'&'
     },
     replace: true,
     templateUrl: 'editable-select-tpl.html', 
@@ -249,11 +281,13 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
       scope.click = function(option) {
         
         scope.isDisabled = !scope.other || scope.other !== option;
-        if (!scope.isDisabled) { // If other is selected
-			scope.ngModel = {name: option};
+		
+        if (!option._id) { // If other is selected
+			scope.ngModel = {name: 'Create new'};
 			element[0].querySelector('.editable-select').focus();
         }
 		else{
+			scope.onSelect();
 			scope.ngModel = option;			
 		}
       };
@@ -263,15 +297,15 @@ angular.module('scotchTodo',['ngAnimate', 'toaster','ngTagsInput','720kb.datepic
           //scope.other = scope.ngModel.name;
         }
 		if(scope.name == "project"){ // If the select for project is being used
-			scope.input.task = {};
-			scope.input.topic = {};
+			//scope.input.task = {};
+			//scope.input.topic = {};
 		}
 		else if(scope.name == "topic"){ // If the select for topic is being used
-			scope.input.task = {};
+			//scope.input.task = {};
 		}
       });
       
       scope.$on('$destroy', unwatch);
     }
   };
-}); 
+});
