@@ -1,0 +1,64 @@
+<div class="col-sm-6">
+	<form class="form-horizontal" name="userForm" ng-submit="submitForm(userForm.$valid)" novalidate>
+		<div class="form-group">								
+			<label style = "color:black"><h5><strong>PROJECT</strong></h5></label>
+			<editable-select 
+			  ng-model="formAdd.proj" 
+			  options="projs"
+			  onSelect="getTopics()"
+			  name="project"
+			  holder="Choose a project"
+			  other="Create new">
+			</editable-select>
+			<!-- <input type="text" class="form-control" placeholder="Project name" name="projectname" ng-model="formAdd.projname" required> -->
+			<!-- <p ng-show="userForm.projectname.$error.required && submitted" style="color:red">Project name is required.</p> -->
+		</div>
+	  
+		<div class="form-group">
+			<label style = "color:black"><h5><strong>TOPIC</strong></h5></label>
+			<editable-select 
+			  ng-model="formAdd.topic" 
+			  options="formAdd.proj.topics" 
+			  other="Create new"
+			  holder="Choose a topic"
+			  name="topic"
+			</editable-select>
+			<!-- <input type="text" class="form-control" placeholder="Topic name" ng-model="formAdd.topicname"> -->
+		</div>
+	  
+		<div class="form-group">
+			<label style = "color:black"><h5><strong>TASK</strong></h5></label>
+			<editable-select 
+			  ng-model="formAdd.task" 
+			  options="formAdd.topic.tasks"
+			  other="Create new"
+			  holder="Choose a task"
+			  name="task"
+			</editable-select>
+		</div>
+		
+		<div class="form-group">
+			<label style = "color:black"><h5><strong>EXTRA FIELDS</strong></h5></label>
+			<select class="form-control" ng-change="addField(extra)" ng-model="extra" ng-options="extra.des for extra in extras">
+				<option ng-selected="formAdd.task==null" value="">Add extra fields</option>
+			</select>
+			
+			<tags-input display-property="text" ng-model="formAdd.task.extras"></tags-input>
+		</div>
+
+		<button type="submit" class="button buttonAdd"><strong>Add</strong></button>
+	
+		<div class="form-group input-group mb-3" style="margin-top:20px">
+			<input type="text" class="form-control" ng-model="newTag" placeholder="Add new extras field here" aria-label="Recipient's username" aria-describedby="button-addon2">
+			<div class="input-group-append">
+				<button class="btn btn-outline-secondary" ng-click="addExtra(newTag)" type="button" id="button-addon2">Add</button>
+			</div>
+		</div>
+	</form>
+</div>					
+<div class="col-sm-6">						  
+	<div class="form-group border-primary textarea-container">						  
+		<label for="textareaAdd" style = "color:black"><h5><strong>TEMPLATE</strong></h5></label>						  
+		<textarea class="form-control" ng-model="formAdd.task.template" id="textareaShow" rows="20"></textarea>
+	</div>
+</div>

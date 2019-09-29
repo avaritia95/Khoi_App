@@ -1,0 +1,105 @@
+<!-- index.html -->
+<!doctype html>
+
+<!-- ASSIGN OUR ANGULAR MODULE -->
+<html ng-app="Khoi_App">
+<head>
+    <!-- META -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Optimize mobile viewport -->
+
+    <title>Node/Angular Todo App</title>
+
+    <!-- SCROLLS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"><!-- load bootstrap -->
+	<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/3.0.0/toaster.min.css" rel="stylesheet" />
+	<link rel="stylesheet" href="http://mbenford.github.io/ngTagsInput/css/ng-tags-input.min.css" />
+	<link rel="stylesheet" href="ui-bootstrap-2.5.0-csp.css">
+	<link rel="stylesheet" href="main.css">
+	<link rel="shortcut icon" href="#" />
+    <style>
+        html                    { overflow-y:scroll; }
+        body                    { 
+			background-image: url("green.png");
+			
+			padding-top:20px;
+		}
+        #todo-list              { margin-bottom:30px; }
+		.button {
+			background-color: #4CAF50; /* Green */
+			border: none;
+			color: white;
+			padding: 10px 27px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+		}
+		.buttonGet {
+		background-color: #2E8B57;
+		border-radius: 12px;
+		} 
+		.buttonAdd {
+		background-color: #2E8B57;
+		border-radius: 12px;
+		} 
+		.buttonCopy {
+		background-color: #2E8B57;
+		border-radius: 12px;
+		}
+    </style>
+
+    <!-- SPELLS -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script><!-- load jquery -->
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular-route.js"></script>		
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular-animate.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.6/angular-touch.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/3.0.0/toaster.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+	<script src="http://mbenford.github.io/ngTagsInput/js/ng-tags-input.min.js"></script>
+	<script src="ui-bootstrap-tpls-2.5.0.min.js"></script>
+	<script src="core.js"></script>
+
+</head>
+<!-- SET THE CONTROLLER AND GET ALL TODOS -->
+<body ng-controller="mainController">
+    <div class="container">
+
+        <!-- HEADER AND TODO COUNT -->
+        <div class="jumbotron text-center">
+            <h1><strong>RAPPOC GENERIC FORM</strong></h1>
+        </div>
+
+		<uib-tabset active="0" justified="true" vertical="true" type="pills">
+			<uib-tab index="0" select="getProjects()">
+				<uib-tab-heading>
+					<h4><strong>HOME</strong></h4>
+				</uib-tab-heading>
+				<div class="row" style="margin-top:20px" ng-include src="'partials/home.html'" data-onload="getProjects()"></div>
+			</uib-tab>
+			<uib-tab index="1">
+				<uib-tab-heading>
+					<h4><strong>CUSTOMIZE</strong></h4>
+				</uib-tab-heading>
+				<toaster-container toaster-options="{'close-button':false, 'time-out':{ 'toast-success': 2000 } }"></toaster-container>				
+				<div class="row" style="margin-top:20px" ng-include src="'partials/customize.html'"></div>
+			</uib-tab>
+			
+			<uib-tab index="2" select="getEmails()">
+				<uib-tab-heading>
+					<h4><strong>EMAIL CONTACTS</strong></h4>
+				</uib-tab-heading>
+				<div class="row" style="margin-top:20px" ng-include src="'partials/email.html'"></div>	
+			</uib-tab>
+			<uib-tab index="3">
+				<uib-tab-heading>
+					<h4><strong>JIRA TEMPLATE</strong></h4>
+				</uib-tab-heading>
+				<div class = "row" style = "margin-top:20px" ng-include src="'partials/jira.html'"></div>
+			</uib-tab>
+		</uib-tabset>
+	</div>
+</body>
+</html>
