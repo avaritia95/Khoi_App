@@ -1,26 +1,26 @@
 [{
-	"_id":NumberLong(1), 
+	"_id": 1, 
 	"name":"A", 
 	"topics": [
 		{
-			"_id":NumberLong(2), 
+			"_id": 2, 
 			"name":"AA",
 			"tasks": [{
-				"_id":NumberLong(4),
+				"_id": 4,
 				"name":"AAA"
 			},{
-				"_id":NumberLong(6),
+				"_id": 6,
 				"name":"AAB"
 			}]
 		},
 		{
-			"_id":NumberLong(3), 
+			"_id": 3, 
 			"name":"AB",
 			"tasks": [{
-				"_id":NumberLong(5),
+				"_id": 5,
 				"name":"ABA"
 			},{
-				"_id":NumberLong(7),
+				"_id": 7,
 				"name":"ABB"
 			}]
 			

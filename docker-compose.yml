@@ -21,7 +21,7 @@ services:
     environment:
         MONGO_INITDB_DATABASE: mydb
     volumes:
-      - ./seed.sh:/docker-entrypoint-initdb.d/seed.sh:ro
+      - ./data:/docker-entrypoint-initdb.d:ro
     ports:
       - "27017:27017"
 #  jira:

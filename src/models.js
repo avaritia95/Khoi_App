@@ -28,8 +28,8 @@ var projectSchema = new Schema(
 	topics: [topicSchema]
 })
 
-var Project = mongoose.model('Project',projectSchema);
-var Extra = mongoose.model('Extra', new Schema ({text: String, des: String}))
+var Project = mongoose.model('Project',projectSchema, 'Project');
+var Extra = mongoose.model('Extra', new Schema ({text: String, des: String}), 'Extra')
 var Email = mongoose.model('Email', new Schema ({code: String, mail: String}), 'Email')
 
 module.exports = {
