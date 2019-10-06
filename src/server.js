@@ -8,7 +8,8 @@
     var morgan = require('morgan');             // log requests to the console (express4)
     var bodyParser = require('body-parser');    // pull information from HTML POST (express4)
     var methodOverride = require('method-override'); // simulate DELETE and PUT (express4)
-	
+	var cron = require('node-cron'); // task-scheduler 
+	const fs = require('fs'); // fileWriter
 	var models = require('./models');				// get models from models.js
     var ObjectId = mongoose.Types.ObjectId;
 	// configuration =================
@@ -48,22 +49,22 @@
     });
 	
 	// This API handle GET request to get topic by projectID
-	app.get('/api/topics', function(req, res) {
+	/*app.get('/api/topics', function(req, res) {
 		models.Project.findById(req.query.projectId, function(err, proj) {
 			if (err)
 				res.send(err)
 			res.json(proj.topics);
         });
-	});
+	});*/
 	
 	// This API handle GET request to get task by projectID and topicID
-	app.get('/api/tasks', function(req, res) {
+	/*app.get('/api/tasks', function(req, res) {
 		models.Project.findById(req.query.projectId, function(err, proj) {
 			if (err)
 				res.send(err)
 			res.json(proj.topics.id(req.query.topicId).tasks);
         });
-	});
+	});*/
 	
 	// This API handle GET request to get mail list by country
 	app.get('/api/email', function(req,res) {
@@ -91,15 +92,90 @@
         // Step 1: upsert project
 		// Step 2: upsert topic
 		// Step 3: upsert task
-		var data = req.body;
-		//console.log(data);
-		upsertProject(data.proj)
-		.then(p => upsertTopic(p,data.topic))
-		.then(t => upsertTask(t,data.task))
-		.then(function(r){
-			//console.log(r);
-			getProjects().then(p => res.json({"projs": p, "msg":r.msg}));
-		})		
+		/*var data = req.body;
+		var msg = [];
+		upsertProject(data.proj, msg)
+		.then(p => {
+			console('Returned from upsert Project');
+			console.log(p);
+			return upsertTopic(p,data.proj.topic, msg)
+			//return getProjects();
+			//else return p;
+		})
+		//.then(function(t) { 
+		//	if(data.proj.topic && data.proj.topic.task) upsertTask(t,data.proj.topic.task)
+		//	else return t;
+		//})
+		.then(r => {
+			console.log('Returned from upsert topic');
+			console.log(r);
+			return getProjects();
+			//res.json({"projs": r, "msg": msg});
+		})
+		.then(p => res.json({"projs": p, "msg": msg}))		
+		.catch(err => function(err){console.log(err)});
+		*/
+		var msg = [];
+		var proj = req.body.proj;
+		var topic = req.body.proj.topic;
+		var task = topic ? req.body.proj.topic.task : null;
+		var update = {name : proj.name};
+		var query = proj._id ? {_id: proj._id} : {_id: new ObjectId()};
+		var option = { upsert: true, new: true, setDefaultsOnInsert: true };
+		models.Project.findOneAndUpdate(query,update,option,function(err,doc){ // Upsert project
+			if (err) msg.push(err);
+			if (proj._id) msg.push("Project update successfully")
+			else msg.push("Project create successfully")
+			return doc;
+		}).exec()
+		.catch(err => function(err){msg.push("Error: " + err); res.send({"msg" : msg})})
+		.then( doc => { // Upsert topic
+			//console.log(doc);
+			if (topic && topic._id) {
+				var query = {'_id' : doc._id, 'topics._id' : topic._id }
+				var update = {'topics.$.name': topic.name}
+				doc.topics.id(topic._id).name = topic.name;
+				msg.push("Topic update successfully")
+			}
+			else if (topic) {
+				console.log(doc);
+				var new_topic = new models.Topic({
+					_id: new ObjectId(),
+					name: topic.name,
+					tasks: []
+				})
+				var query = {'_id': doc._id }
+				var update = { '$push' : new_topic }
+				doc.topics.push(new_topic);
+				msg.push("Topic create successfully")
+			}			
+			return doc.save();
+		})
+		.catch(err => function(err){msg.push("Error: " + err); res.send({"msg" : msg})})
+		.then ( doc => { // Upsert task
+			if(task && task._id) {
+				var my_task = doc.topics.id(topic._id).tasks.id(task._id);
+				var is_replace = my_task.name == task.name && my_task.template == task.template && my_task.extras.sort() == task.extras.sort()
+				if (!is_replace) {
+					my_task.name = task.name
+					my_task.template = task.template;
+					my_task.extras = task.extras;
+					msg.push("Task update successfully");
+				};				
+			}
+			else if (task) {
+				var new_task = new models.Task({name: task.name, extras: task.extras});
+				doc.topics.id(topic._id).tasks.push(new_task);
+				msg.push("Task create successfully");				
+			}
+			return doc.save();
+		})
+		.catch(err => function(err){msg.push("Error: " + err); res.send({"msg" : msg})})
+		.then( r => { // Return updated projects
+			return getProjects();
+		})
+		.catch(err => function(err){msg.push("Error: " + err); res.send({"msg" : msg})})
+		.then(p => res.json({"projs": p, "msg": msg}))	
 		.catch(err => function(err){console.log(err)});
     });
 	
@@ -195,11 +271,10 @@
 	
 	// Get list of projects
 	async function getProjects(){
-		var projects = await models.Project.find(function(err, projs) {
+		return await models.Project.find(function(err, projs) {
             if (err) console.log(err);
             return projs;
         });
-		return projects;
 	}
 	
 	// Check if object is empty, like {} or [] or null or undefined
@@ -210,24 +285,58 @@
 		return true;
 	}
 	
+	// Set up task scheduler to backup data every midnight
+	cron.schedule('0 0 0 * * *', () => {
+		console.log('running backup every midnight');
+		getProjects().then(p => {
+			let data = JSON.stringify(p);
+			fs.writeFile('/usr/src/app/data/project.json', data, (err) => {
+				if (err) throw err;
+				console.log('Backup successfully');
+			});
+		});
+	});
 	// Insert or update project
-	async function upsertProject(proj){
+	/* async function upsertProject(proj, m){
 		var update = {name : proj.name};
-		var query = {$or: [{_id: proj._id},{name: proj.name}]};
-		var options = { upsert: true, new: true, setDefaultsOnInsert: true };
-		let p = await models.Project.findOneAndUpdate(query,update,options,function(err,proj){
-			if (err) console.log(err);
-			return proj;
-		})
-		return {"proj":p,"msg":"Project upsert successfully"};
-	}
+		var query = proj._id ? {_id: proj._id} : {_id: new ObjectId()};
+		var option = { upsert: true, new: true, setDefaultsOnInsert: true };
+		return await models.Project.findOneAndUpdate(query,update,option,function(err,doc){
+			if (err) m.push(err);
+			if (proj._id) m.push("Project update successfully")
+			else m.push("Project create successfully")
+			return doc;
+		}).exec();
+	} */
 	
 	// Insert of update topic
-	async function upsertTopic(r,topic){
+	/*async function upsertTopic(doc,topic,m){
 		
-		if(isEmpty(topic)) return r; // If only upsert project
+		//if(isEmpty(topic)) return r; // If only upsert project
+		if (topic._id) {
+			var query = {'_id' : doc._id, 'topics._id' : topic._id }
+			var update = {'topics.$.name': topic.name}
+			doc.topics.id(topic._id).name = topic.name;
+		}
+		else {
+			var new_topic = new models.Topic({
+				_id: new ObjectId(),
+				name: topic.name,
+				tasks: []
+			})
+			var query = {'_id': doc._id }
+			var update = { '$push' : new_topic }
+			doc.topics.push(new_topic);
+		}
+		return doc.save().exec();
+		//return await models.Project.findOneAndUpdate(option, update, function (err, _doc) {
+		//	if(err) m.push(err);
+		//	if(topic._id) m.push("Topic update successfully");
+		//	else m.push("Topic create successfully");
+		//	return _doc;
+		//}).exec();
 		var result;
-		for(i = 0, ts = r.proj.topics; i < ts.length; i++){
+		for(i = 0, ts = doc.topics; i < ts.length; i++){
 			if (ts[i]._id == topic._id || ts[i].name == topic.name){ // If topic exist with same ID or same name
 				//update topic here
 				ts[i].name = topic.name;
@@ -242,18 +351,18 @@
 				name: topic.name,
 				tasks: []
 			})
-			r.proj.topics.push(newtopic);
+			doc.topics.push(newtopic);
 			result = newtopic;
 		}
-		await r.proj.save(); // save changes
-		r["topic"] = result; 
-		r["msg"] = "Topic upsert successfully";
-		return r;
-	}
+		await doc.save(); // save changes
+		if(topic._id) m.push("Topic update successfully");
+		else m.push("Topic create successfully");
+		return doc;
+	}*/
 	
 	// Insert or update a task, given that project ID and topic ID are known
-	async function upsertTask(r,task){
-		if(isEmpty(task)) return r; // If only upsert topic
+	/*async function upsertTask(my_project, task, msg){
+		/*if(isEmpty(task)) return r; // If only upsert topic
 		var result = {};
 		for(i = 0, ts = r.proj.topics.id(r.topic._id).tasks; i < ts.length; i++){
 			if (ts[i]._id == task._id || ts[i].name == task.name){ // If task exist with same ID or same name
@@ -279,7 +388,30 @@
 		r["task"] = result; 
 		r["msg"] = "Task upsert successfully";
 		return r;
-	}
+		let p = await models.Project.find(my_project.project_id, function (err, doc){
+			if(task._id) {
+				var my_task = doc.topics.id(my_project.topic_id).tasks.id(task._id);
+				var is_replace = my_task.name == task.name && my_task.template == task.template && my_task.extras.sort() == task.extras.sort()
+				if (!is_replace) {
+					my_task.name = task.name
+					my_task.template = task.template;
+					my_task.extras = task.extras;
+					msg.push("Task update successfully");
+					doc.save();
+				};				
+				return {project_id : my_project.project_id , topic_id: my_project.topic_id, task_id: task._id};
+			}
+			else {
+				var new_task = new models.Task({name: task.name, template: task.template, extras: task.extras});
+				doc.topics.id(my_project.topic_id).tasks.push(new_topic);
+				msg.push("Task create successfully");
+				new_task.save(function(err, _t){ 
+					return {project_id : my_project.project_id , topic_id: my_project.topic_id, task_id: _t._id};
+				});				
+			}
+		});
+		return p;
+	}*/
 	
 	// application -------------------------------------------------------------
     app.get('*', function(req, res) {
