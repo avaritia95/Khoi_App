@@ -1,4 +1,4 @@
-<div class="col-sm-7">
+<div class="col-sm-3">
 	<div class="form-group input-group mb-3" style="margin-top:20px">
 		<label style = "color:black"><h5><strong>COUNTRY</strong></h5></label>
 		<select class="form-control" ng-click="createMailTemplate(country)" ng-model="country" ng-options="c as c.code for c in countries">
@@ -8,7 +8,7 @@
 
 	
 </div>
-<div class="col-sm-5">
+<div class="col-sm-8">
 	<div id="fakeTextAreaMail" class="fakeTextArea" contenteditable style="background-color:white">{{email_template}}</div>
 	<textarea hidden style="display:none" id = "textareaMail" class="form-control" ng-model="email_template" rows="3"></textarea>
 	<button type="button" class="button buttonCopy" ng-click="copyToClipboardwithFormat('fakeTextAreaMail')">
