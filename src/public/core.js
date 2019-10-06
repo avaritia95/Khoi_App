@@ -1,30 +1,27 @@
 // public/core.js
 
-angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) // using ngAnimate, toaster, ngTagsInput, datepicker modules
+angular.module('Khoi_App',['ngRoute', 'toaster', 'ui.bootstrap']) // using ngAnimate, toaster, ngTagsInput, datepicker modules
 .controller('mainController', function($scope, $http, toaster, $uibModal) {
-    $scope.formGet = {};
+
 	$scope.formAdd = {};
-    $scope.jira = {};
-	
+	$scope.jira = {};
+	$scope.dateOptions = {
+		maxDate: new Date(2020, 5, 22),
+		minDate: new Date(),
+		startingDay: 1
+		
+  };
+
 	// when landing on the page, get all projects and show them
     $scope.getProjects = function() {
 		$http.get('/api/projects') // Send GET request to specified url
 		.then(function(res) {
-			$scope.formGet.projs = res.data;
 			$scope.formAdd.projs = res.data;
 		}, function(err) {
 			console.log('Error: ' + err);
 		});
 	}
-	// when landing on the page, get all extra fields and show them
-	$scope.getExtras = function() {
-		$http.get('/api/extras')  // Send GET request to specified url
-		.then(function(res) {
-			$scope.extras = res.data;
-		},function(err){
-			console.log('Error: ' + err);
-        });
-    }
+	
 	// when landing on the page, get all mails and show them
 	$scope.getEmails = function() {
 		$http.get('/api/email')  // Send GET request to specified url
@@ -37,19 +34,22 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 	// when submitting the add form, send the POST request to the node API
     $scope.submitForm = function(isValid) { // Submit form
 		$scope.submitted = true;
+		
 		if(isValid){
 			$http.post('/api/add', $scope.formAdd)
 			.then(function(res) {
-				toaster.pop('success', null, res.data.msg, 2000, 'trustedHtml');
+				displayAddError(res.data.msg);
 				$scope.formAdd = {};
-				$scope.formGet = {};
-				$scope.projs = res.data.projs;
+				$scope.formAdd.projs = res.data.projs;
+				console.log(res.data);
 			}, function(err) {
-				console.log('Error: ' + err.msg);
+				console.log('Error: ' + err);
 			})
+			//console.log($scope.formAdd)
 		}
     };
 	
+	// function to open login modal
 	$scope.openLoginModal = function () {
 		var modalInstance = $uibModal.open({
 			ariaLabelledBy: 'modal-title',
@@ -69,6 +69,7 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 		  console.log('Modal dismissed at: ' + new Date());
 		});
 	};
+	
 	// Check object is empty
 	function isEmpty(obj) {
 		for ( name in obj) {
@@ -77,6 +78,12 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 		return true;
 	}
 	
+	function displayAddError(errs) {
+		for (var i = 0; i < errs.length; i++) {
+			if(errs[i].includes("success")) toaster.pop('success', null, errs[i], 3000, 'trustedHtml');
+			else if (errs[i].includes("Error")) toaster.pop('error', null, errs[i], 3000, 'trustedHtml');
+		}
+	}
 	// Clear text area
 	$scope.clearTextArea = function(){
 		$scope.template = "";
@@ -92,8 +99,36 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 		}
 	}
 	
+	$scope.extractExtras = function(template) {
+		if(!template) return [];
+		var extras = [];
+		var temp = template.split('{');
+		for(var i = 1; i < temp.length; i++) {
+			extras.push(temp[i].split('}')[0]);
+		}
+		return extras;
+	}
+	$scope.generateTemplate = function() {
+		var t = $scope.formAdd.proj.topic.task.template;
+		var ex = $scope.extractExtras(t)
+		for(i = 0; i < ex.length; i++){
+			var r = $('input[name=' + ex[i] + "]").val();
+			t = t.replace("{" + ex[i]+ "}",r);
+		}
+		$scope.formAdd.copyTemplate = t;				
+	}
+	
+	// when landing on the page, get all extra fields and show them
+	/*$scope.getExtras = function() {
+		$http.get('/api/extras')  // Send GET request to specified url
+		.then(function(res) {
+			$scope.extras = res.data;
+		},function(err){
+			console.log('Error: ' + err);
+        });
+    }*/
 	// Add extra field
-	$scope.addExtra = function(t){
+	/*$scope.addExtra = function(t){
 		if (t != null && t != ""){
 			$http.post('/api/extras', {tag: t})
 			.then(function(res) {
@@ -108,24 +143,24 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 	
 	// Add tag to extra field requirement of task
 	$scope.addField = function(extra){
-		if(isEmpty($scope.formAdd.task.extras)) $scope.formAdd.task.extras = [];
-		if(!isEmpty($scope.formAdd.task)) {
-			if (!$scope.formAdd.task.extras.some(e => e.text === extra.text)) { // If the task does not have this extra field, then add
-				$scope.formAdd.task.extras.push(extra);
-			}			
-		}
+		var extras = $scope.formAdd.proj.topic.task.extras;
+		//if($scope.formAdd.task.extras) $scope.formAdd.task.extras = [];
+		if (!extras.some(e => e.text === extra.text)) { // If the task does not have this extra field, then add
+			extras.push(extra);
+		}			
 		//console.log($scope.formAdd.task);
-	}
+	}*/
+	
 	
 	// Get template and replace extra fields with input values
-	$scope.getTemplate = function() {
+	/*$scope.getTemplate = function() {
 		$http.post('/api/template', $scope.formGet)
 			.then(function(res) {
 				var t = res.data;
 				var ex = $scope.formGet.task.extras;
 				for(i = 0; i < ex.length; i++){
 					var r = $('input[name=' + ex[i].text + "]").val();
-					t = t.replace("(" + ex[i].text + ")",r);
+					t = t.replace("{" + ex[i].text + "}",r);
 				}
 				$scope.template = t;				
 				//console.log(t);
@@ -133,7 +168,7 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 			}, function(err) {
 				console.log('Error: ' + err);
 			})
-    };
+    };*/
 	// field the Jira template with input values
 	$scope.getJiraTemplate = function(){
 		var checkedAccountIDVar = $scope.jira.checkedAccountID;
@@ -195,7 +230,7 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 		}) 
 	}
 	// Copy content of div to clipboard
-	$scope.copyToClipboardwithFormat = function(element) {
+	/*$scope.copyToClipboardwithFormat = function(element) {
 		var doc = document
 		var text = doc.getElementById(element)
 		var range; var selection;
@@ -218,35 +253,7 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 		document.execCommand('copy');
 		window.getSelection().removeAllRanges();
 		document.getElementById("btn").value="Copied";
-	}
-	
-	// Send request with projectID to get topic list
-	$scope.getTopics = function(id){
-		$scope.clearTextArea();
-		if (id==null) return;
-		$http.get("api/topics",{params: {projectId: id}})
-			.then(function(res) {
-				$scope.topics = res.data;
-				//console.log(res);
-			}, function(err) {
-				console.log('Error: ' + err);
-			});
-	}
-	
-	// Send request with projectID and topicID to get task list
-	$scope.getTasks = function(projId,topicId){
-		$scope.clearTextArea();
-		var p = projId;
-		var t = topicId;
-
-		if (p==null || t ==null) return;
-		$http.get("api/tasks",{params: {projectId: p, topicId: t }})
-			.then(function(res) {
-				$scope.tasks = res.data;
-			}, function(err) {
-				console.log('Error: ' + err);
-			});
-	}  
+	}*/
 })
 .controller('ModalInstanceCtrl', function ($scope, $uibModalInstance) {
 	$scope.login = { user: 'D1234', pass: 'D1234'}
@@ -266,12 +273,10 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 	transclude: true,
     scope: {
       ngModel: '=',
-	  input: '=',
       options: '=',
       other: '@',
-	  name: '@',
 	  holder: '@',
-	  onSelect:'&'
+	  name: '@'
     },
     replace: true,
     templateUrl: 'editable-select-tpl.html', 
@@ -280,30 +285,24 @@ angular.module('Khoi_App',['ngRoute','ngTagsInput', 'toaster', 'ui.bootstrap']) 
 	  
       scope.click = function(option) {
         
-        scope.isDisabled = !scope.other || scope.other !== option;
+        //scope.isDisabled = !scope.other || scope.other !== option;
 		
         if (!option._id) { // If other is selected
 			scope.ngModel = {name: 'Create new'};
 			element[0].querySelector('.editable-select').focus();
         }
 		else{
-			scope.onSelect();
-			scope.ngModel = option;			
+			scope.ngModel = option;
 		}
       };
       
-      var unwatch = scope.$watch('ngModel', function(val) {
-        if (!scope.isDisabled) {
-          //scope.other = scope.ngModel.name;
-        }
-		if(scope.name == "project"){ // If the select for project is being used
-			//scope.input.task = {};
-			//scope.input.topic = {};
+      var unwatch = scope.$watch('ngModel.name', function(val) {
+		if (scope.options && val && !scope.ngModel._id && scope.options.some(e => e.name == val)) {
+			var result = confirm('You are creating a ' + scope.name + 
+				' that has same name with existed one! Do you wish to switch to existed ' + scope.name + '?');
+			if(result) scope.ngModel = scope.options.filter(e => e.name == val)[0];
 		}
-		else if(scope.name == "topic"){ // If the select for topic is being used
-			//scope.input.task = {};
-		}
-      });
+	  });
       
       scope.$on('$destroy', unwatch);
     }
