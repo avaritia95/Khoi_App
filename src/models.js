@@ -10,7 +10,7 @@ var taskSchema = new Schema(
 	extras: [],
 	template: String	
 });
-var Task = mongoose.model('Task',taskSchema);
+var Task = mongoose.model('Task',taskSchema, 'Task');
 
 var topicSchema = new Schema(
 {	
@@ -19,7 +19,7 @@ var topicSchema = new Schema(
 	tasks: [taskSchema]
 })
 
-var Topic = mongoose.model('Topic',topicSchema);
+var Topic = mongoose.model('Topic',topicSchema, 'Topic');
 
 var projectSchema = new Schema(
 {	
