@@ -5,7 +5,7 @@
   "main": "server.js",
   "author": "Scotch",
   "dependencies": {
-    "angular": "^1.6.4",
+    "angular": "^1.8.3",
     "angular-route": "^1.6.4",
     "angularjs-datepicker": "^2.1.23",
     "body-parser": "^1.18.3",
