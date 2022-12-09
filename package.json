@@ -9,7 +9,7 @@
     "angular-route": "^1.6.4",
     "angularjs-datepicker": "^2.1.23",
     "body-parser": "^1.18.3",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "method-override": "~3.0.0",
     "mongodb": "^3.1.13",
     "mongoose": "^5.4.23",
